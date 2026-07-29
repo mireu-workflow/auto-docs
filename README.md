@@ -49,3 +49,6 @@ Github Actions, Gitlab Runner, 뭐 잘 되면 Jenkins에서도 돌아 갈수있�
 - **MCP 실행 모드**:
   - `./auto-docs`: 일반 자동 보고서 생성 및 Wiki 자동 배포 모드
   - `./auto-docs --mcp-server`: Stdio 기반 JSON-RPC 2.0 독립 MCP 서버 구동 모드
+
+### 📚 CI/CD 가이드 문서
+- [GitHub Actions & GitLab Runner 셋업 가이드](wiki_docs/GitHub-Actions-and-GitLab-Runner-Setup.md)
