@@ -1,0 +1,32 @@
+name: auto-docs Wiki Generator
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Build auto-docs CLI
+        run: go build -o auto-docs main.go
+
+      - name: Run auto-docs & Update Wiki
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: "gemma-4"
+          WIKI_REPO_URL: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git"
+          GIT_USERNAME: "github-actions[bot]"
+          GIT_EMAIL: "github-actions[bot]@users.noreply.github.com"
+        run: ./auto-docs
