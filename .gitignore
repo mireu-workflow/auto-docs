@@ -1,0 +1,13 @@
+# Binaries
+bin/
+auto-docs
+auto-docs.exe
+
+# Local wiki test outputs
+wiki_output/
+
+# IDE & OS files
+.idea/
+.vscode/
+*.swp
+.DS_Store
