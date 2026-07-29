@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>auto-docs | Automated AI & MCP Documentation Generator</title>
+    <meta name="description" content="Gemma4 AI Agent와 MCP를 활용하여 GitHub/GitLab Wiki에 기술 문서를 자동 배포하는 auto-docs 프로젝트">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Pretendard:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glow"></div>
+
+    <header class="navbar">
+        <div class="logo">
+            <span class="logo-icon">🚀</span>
+            <span class="logo-text">auto-docs</span>
+        </div>
+        <nav class="nav-links">
+            <a href="#features">주요 기능</a>
+            <a href="#architecture">아키텍처</a>
+            <a href="#mcp">MCP 도구</a>
+            <a href="#cicd">CI/CD 연동</a>
+            <a href="https://github.com/Mireu-Lab/auto-docs/wiki" target="_blank" class="btn-wiki">GitHub Wiki 바로가기</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="badge">✨ Powered by Gemma4 & MCP Engine</div>
+            <h1>소스코드 분석부터 Wiki 배포까지<br><span class="gradient-text">자동화된 AI 기술 문서 생성기</span></h1>
+            <p class="hero-desc">
+                구현 명세서에 속아 시간을 낭비하던 경험은 이제 그만.<br>
+                <code>auto-docs</code>는 Git Diff와 소스 코드를 직접 분석하여 최신 기술 문서를 GitHub & GitLab Wiki에 자동 배포합니다.
+            </p>
+            <div class="hero-actions">
+                <a href="https://github.com/Mireu-Lab/auto-docs" target="_blank" class="btn-primary">GitHub Repository</a>
+                <a href="#cicd" class="btn-secondary">적용 방법 보기</a>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="section">
+            <h2 class="section-title">핵심 제공 기능</h2>
+            <div class="grid-cards">
+                <div class="card">
+                    <div class="card-icon">🧠</div>
+                    <h3>Google AI Studio Gemma4 연동</h3>
+                    <p>최신 Gemma4 LLM을 활용해 코드 변경 사항 및 모듈별 기술 요구사항을 높은 정밀도로 Markdown 렌더링합니다.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔌</div>
+                    <h3>공식 mark3labs/mcp-go 규격</h3>
+                    <p>Stdio JSON-RPC 2.0 표준을 준수하여 확장 가능하고 안전한 Model Context Protocol(MCP) 환경을 제공합니다.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📚</div>
+                    <h3>GitHub & GitLab Wiki 자동 배포</h3>
+                    <p>웹 서버 구축 비용 없이 Wiki 저장소를 자동으로 Clone -> Commit -> Push하여 <code>_Sidebar.md</code> 네비게이션까지 관리합니다.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔄</div>
+                    <h3>타 Repository 재사용 지원</h3>
+                    <p>GitHub Action (<code>Mireu-Lab/auto-docs@v1</code>) 한 줄 추가로 모든 프로젝트에 즉시 적용 가능합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section">
+            <h2 class="section-title">시스템 아키텍처</h2>
+            <div class="architecture-box">
+                <div class="arch-step">
+                    <div class="step-num">01</div>
+                    <div class="step-content">
+                        <h4>CI/CD Trigger</h4>
+                        <p>GitHub Actions / GitLab Runner / Jenkins에서 코드 Push 감지</p>
+                    </div>
+                </div>
+                <div class="arch-arrow">➔</div>
+                <div class="arch-step">
+                    <div class="step-num">02</div>
+                    <div class="step-content">
+                        <h4>MCP Code Collector</h4>
+                        <p>Git Diff Analyzer 및 FileSystem Reader 도구가 소스코드 수집</p>
+                    </div>
+                </div>
+                <div class="arch-arrow">➔</div>
+                <div class="arch-step">
+                    <div class="step-num">03</div>
+                    <div class="step-content">
+                        <h4>Gemma4 AI Synthesis</h4>
+                        <p>AI Studio LLM이 분석 결과 기반 마크다운 문서 생성</p>
+                    </div>
+                </div>
+                <div class="arch-arrow">➔</div>
+                <div class="arch-step">
+                    <div class="step-num">04</div>
+                    <div class="step-content">
+                        <h4>Wiki Push</h4>
+                        <p>Home.md 및 _Sidebar.md 네비게이션 동기화 배포</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MCP Tools Section -->
+        <section id="mcp" class="section">
+            <h2 class="section-title">기본 탑재 MCP (Model Context Protocol) 도구</h2>
+            <div class="mcp-container">
+                <div class="mcp-card">
+                    <span class="tag">Git MCP</span>
+                    <h3><code>git_diff_analyzer</code></h3>
+                    <p>HEAD~1 대비 파일 변경 목록 및 Git Diff 요약본 추출</p>
+                    <pre><code>base_ref: "HEAD~1"</code></pre>
+                </div>
+                <div class="mcp-card">
+                    <span class="tag">FileSystem MCP</span>
+                    <h3><code>filesystem_reader</code></h3>
+                    <p>프로젝트 내부 소스코드 파일 내용 안전 조회 및 파싱</p>
+                    <pre><code>files: "pkg/agent/agent.go,main.go"</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- CI/CD Quickstart Section -->
+        <section id="cicd" class="section">
+            <h2 class="section-title">GitHub Actions 적용 방법</h2>
+            <div class="code-box">
+                <div class="code-header">.github/workflows/auto-docs.yml</div>
+                <pre><code>name: Auto Docs Wiki Generator
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run auto-docs
+        uses: Mireu-Lab/auto-docs@v1
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          wiki_repo_url: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git"</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Mireu-Lab / auto-docs. Powered by Go 1.26, Gemma4 & MCP Engine.</p>
+    </footer>
+</body>
+</html>
