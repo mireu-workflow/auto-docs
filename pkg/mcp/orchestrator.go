@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Mireu-Lab/auto-docs/pkg/analyzer"
+	"github.com/Mireu-Lab/auto-docs/pkg/searcher"
 )
 
 type MCPTool interface {
@@ -81,6 +82,22 @@ func (c *CodeSearchMCPTool) Execute(ctx context.Context, args map[string]interfa
 	return c.Analyzer.SearchCode(ctx, query, isRegex)
 }
 
+type DuckDuckGoSearchMCPTool struct {
+	Searcher *searcher.DuckDuckGoSearcher
+}
+
+func (d *DuckDuckGoSearchMCPTool) Name() string {
+	return "duckduckgo_search"
+}
+
+func (d *DuckDuckGoSearchMCPTool) Execute(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	query, _ := args["query"].(string)
+	if query == "" {
+		return nil, fmt.Errorf("query argument is required")
+	}
+	return d.Searcher.Search(ctx, query)
+}
+
 type MCPOrchestrator struct {
 	tools map[string]MCPTool
 }
@@ -93,6 +110,7 @@ func NewMCPOrchestrator(analyzer *analyzer.CodeAnalyzer) *MCPOrchestrator {
 	o.RegisterTool(&FileSystemMCPTool{Analyzer: analyzer})
 	o.RegisterTool(&ReadFileMCPTool{Analyzer: analyzer})
 	o.RegisterTool(&CodeSearchMCPTool{Analyzer: analyzer})
+	o.RegisterTool(&DuckDuckGoSearchMCPTool{Searcher: searcher.NewDuckDuckGoSearcher()})
 	return o
 }
 

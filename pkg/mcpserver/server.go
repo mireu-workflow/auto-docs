@@ -3,8 +3,10 @@ package mcpserver
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Mireu-Lab/auto-docs/pkg/analyzer"
+	"github.com/Mireu-Lab/auto-docs/pkg/searcher"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -16,6 +18,7 @@ type AutoDocsMCPServer struct {
 
 func NewAutoDocsMCPServer(repoPath string) *AutoDocsMCPServer {
 	codeAnalyzer := analyzer.NewCodeAnalyzer(repoPath)
+	ddgSearcher := searcher.NewDuckDuckGoSearcher()
 	s := server.NewMCPServer(
 		"auto-docs-mcp-server",
 		"1.0.0",
@@ -122,6 +125,33 @@ func NewAutoDocsMCPServer(repoPath string) *AutoDocsMCPServer {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
 			return mcp.NewToolResultText(matches), nil
+		},
+	)
+
+	s.AddTool(
+		mcp.NewTool("duckduckgo_search",
+			mcp.WithDescription("Perform live web search using DuckDuckGo to look up external documentation or technical info"),
+			mcp.WithString("query", mcp.Required(), mcp.Description("Search query keyword")),
+		),
+		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			args, _ := req.Params.Arguments.(map[string]interface{})
+			if args == nil {
+				return mcp.NewToolResultError("missing arguments"), nil
+			}
+			query, _ := args["query"].(string)
+			if query == "" {
+				return mcp.NewToolResultError("query argument is required"), nil
+			}
+
+			results, err := ddgSearcher.Search(ctx, query)
+			if err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
+			var sb strings.Builder
+			for i, r := range results {
+				sb.WriteString(fmt.Sprintf("%d. [%s](%s)\n   %s\n\n", i+1, r.Title, r.URL, r.Snippet))
+			}
+			return mcp.NewToolResultText(sb.String()), nil
 		},
 	)
 
