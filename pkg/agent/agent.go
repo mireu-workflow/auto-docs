@@ -30,7 +30,8 @@ func NewGeminiClient(cfg *config.Config) *GeminiClient {
 }
 
 type geminiRequest struct {
-	Contents []geminiContent `json:"contents"`
+	SystemInstruction *geminiContent  `json:"systemInstruction,omitempty"`
+	Contents          []geminiContent `json:"contents"`
 }
 
 type geminiContent struct {
@@ -91,10 +92,15 @@ func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview strin
 
 	promptBuilder.WriteString(fmt.Sprintf(`
 ---
+### CRITICAL OUTPUT RULE:
+- DO NOT output any reasoning steps, planning notes, preambles, metadata summaries, bulleted lists of project stack analysis, or conversational filler text.
+- Start IMMEDIATELY with the main Markdown title header ('# 🚀 ...') and output ONLY pure Markdown document content.
+- Your entire response will be written directly into a Wiki Markdown file.
+
 ### Report Format & Structure Requirements:
 You MUST follow the exact Markdown structure below (matching the official Wiki template format):
 
-1. **Title**: '🚀 {Project Name} 사용설명 가이드 (Usage Guide)' (or translated to target language)
+1. **Title**: '# 🚀 {Project Name} 사용설명 가이드 (Usage Guide)' (or translated to target language)
 2. **Project Summary**: 1-2 sentence high-level overview of the project & LLM + MCP engine capabilities.
 3. **📌 주요 특징 (Key Features)**:
    - Bulleted/numbered list describing key features and modules found in code.
@@ -117,6 +123,11 @@ You MUST follow the exact Markdown structure below (matching the official Wiki t
 `, g.cfg.GoalPrompt, g.cfg.DocsLanguage))
 
 	reqBody := geminiRequest{
+		SystemInstruction: &geminiContent{
+			Parts: []geminiPart{
+				{Text: "You are a strict technical documentation generator. Output ONLY pure Markdown documentation. NEVER output reasoning notes, planning bullet points, preambles, summaries of intent, or conversational wrapper text before or after the report. Start directly with '# 🚀'."},
+			},
+		},
 		Contents: []geminiContent{
 			{
 				Parts: []geminiPart{
@@ -164,5 +175,28 @@ You MUST follow the exact Markdown structure below (matching the official Wiki t
 		return "", fmt.Errorf("empty candidate response from Gemini API")
 	}
 
-	return gResp.Candidates[0].Content.Parts[0].Text, nil
+	rawReport := gResp.Candidates[0].Content.Parts[0].Text
+	return cleanReportOutput(rawReport), nil
+}
+
+func cleanReportOutput(text string) string {
+	text = strings.TrimSpace(text)
+
+	// Remove markdown codeblock wrapper if the model accidentally wrapped the entire document in ```markdown ... ```
+	if strings.HasPrefix(text, "```markdown") && strings.HasSuffix(text, "```") {
+		text = strings.TrimPrefix(text, "```markdown")
+		text = strings.TrimSuffix(text, "```")
+		text = strings.TrimSpace(text)
+	} else if strings.HasPrefix(text, "```") && strings.HasSuffix(text, "```") {
+		text = strings.TrimPrefix(text, "```")
+		text = strings.TrimSuffix(text, "```")
+		text = strings.TrimSpace(text)
+	}
+
+	// Strip any preamble or reasoning notes before the first markdown header '# '
+	if idx := strings.Index(text, "# "); idx > 0 {
+		text = text[idx:]
+	}
+
+	return strings.TrimSpace(text)
 }
