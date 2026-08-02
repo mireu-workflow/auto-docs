@@ -123,11 +123,11 @@ build-container:
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
-    - echo "Building Docker image: $IMAGE_TAG"
-    - docker build -t "$IMAGE_TAG" -t "$IMAGE_TAG_LATEST" .
-    - echo "Pushing Docker image to Container Registry..."
-    - docker push "$IMAGE_TAG"
-    - docker push "$IMAGE_TAG_LATEST"
+    - 'echo "Building Docker image: $IMAGE_TAG"'
+    - 'docker build -t "$IMAGE_TAG" -t "$IMAGE_TAG_LATEST" .'
+    - 'echo "Pushing Docker image to Container Registry..."'
+    - 'docker push "$IMAGE_TAG"'
+    - 'docker push "$IMAGE_TAG_LATEST"'
   only:
     - main
     - master
