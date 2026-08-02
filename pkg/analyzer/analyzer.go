@@ -92,3 +92,74 @@ func (a *CodeAnalyzer) CollectProjectOverview() (string, error) {
 
 	return builder.String(), nil
 }
+
+// ReadFileContent reads a specific file with optional line range (1-indexed, 0 means all lines).
+func (a *CodeAnalyzer) ReadFileContent(relPath string, startLine, endLine int) (string, error) {
+	fullPath := filepath.Join(a.RepoPath, relPath)
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("file not found: %s", relPath)
+	}
+	if info.IsDir() {
+		return "", fmt.Errorf("path is a directory: %s", relPath)
+	}
+	if info.Size() > 1024*1024 {
+		return "", fmt.Errorf("file size too large (>1MB): %s", relPath)
+	}
+
+	contentBytes, err := os.ReadFile(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	lines := strings.Split(string(contentBytes), "\n")
+	if startLine <= 0 {
+		startLine = 1
+	}
+	if endLine <= 0 || endLine > len(lines) {
+		endLine = len(lines)
+	}
+	if startLine > len(lines) {
+		return "", fmt.Errorf("startLine %d exceeds line count %d", startLine, len(lines))
+	}
+
+	var sb strings.Builder
+	for i := startLine - 1; i < endLine; i++ {
+		sb.WriteString(fmt.Sprintf("%4d | %s\n", i+1, lines[i]))
+	}
+	return sb.String(), nil
+}
+
+// SearchCode searches for a query string or regex pattern across repository files using git grep.
+func (a *CodeAnalyzer) SearchCode(ctx context.Context, query string, isRegex bool) (string, error) {
+	if strings.TrimSpace(query) == "" {
+		return "", fmt.Errorf("query cannot be empty")
+	}
+
+	args := []string{"grep", "-n", "-I"}
+	if isRegex {
+		args = append(args, "-E")
+	} else {
+		args = append(args, "-F")
+	}
+	args = append(args, query)
+
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Dir = a.RepoPath
+	out, err := cmd.Output()
+	if err != nil {
+		// git grep returns exit code 1 if no matches found
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+			return "No matches found for query: " + query, nil
+		}
+		return "", fmt.Errorf("failed to search code: %w", err)
+	}
+
+	result := string(out)
+	lines := strings.Split(result, "\n")
+	if len(lines) > 200 {
+		result = strings.Join(lines[:200], "\n") + fmt.Sprintf("\n... [truncated %d total matches]", len(lines))
+	}
+
+	return result, nil
+}

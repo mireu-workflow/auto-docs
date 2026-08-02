@@ -41,6 +41,46 @@ func (f *FileSystemMCPTool) Execute(ctx context.Context, args map[string]interfa
 	return f.Analyzer.ReadSourceFiles(files)
 }
 
+type ReadFileMCPTool struct {
+	Analyzer *analyzer.CodeAnalyzer
+}
+
+func (r *ReadFileMCPTool) Name() string {
+	return "read_file"
+}
+
+func (r *ReadFileMCPTool) Execute(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	path, _ := args["path"].(string)
+	if path == "" {
+		return nil, fmt.Errorf("path argument is required")
+	}
+	var startLine, endLine int
+	if sl, ok := args["start_line"].(int); ok {
+		startLine = sl
+	}
+	if el, ok := args["end_line"].(int); ok {
+		endLine = el
+	}
+	return r.Analyzer.ReadFileContent(path, startLine, endLine)
+}
+
+type CodeSearchMCPTool struct {
+	Analyzer *analyzer.CodeAnalyzer
+}
+
+func (c *CodeSearchMCPTool) Name() string {
+	return "code_search"
+}
+
+func (c *CodeSearchMCPTool) Execute(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	query, _ := args["query"].(string)
+	if query == "" {
+		return nil, fmt.Errorf("query argument is required")
+	}
+	isRegex, _ := args["is_regex"].(bool)
+	return c.Analyzer.SearchCode(ctx, query, isRegex)
+}
+
 type MCPOrchestrator struct {
 	tools map[string]MCPTool
 }
@@ -51,6 +91,8 @@ func NewMCPOrchestrator(analyzer *analyzer.CodeAnalyzer) *MCPOrchestrator {
 	}
 	o.RegisterTool(&GitMCPTool{Analyzer: analyzer})
 	o.RegisterTool(&FileSystemMCPTool{Analyzer: analyzer})
+	o.RegisterTool(&ReadFileMCPTool{Analyzer: analyzer})
+	o.RegisterTool(&CodeSearchMCPTool{Analyzer: analyzer})
 	return o
 }
 

@@ -46,6 +46,8 @@ Github Actions, Gitlab Runner, 뭐 잘 되면 Jenkins에서도 돌아 갈수있�
 - **기본 탑재 MCP (Model Context Protocol) 도구**:
   - `git_diff_analyzer`: Git diff 및 변경 파일 목록 분석 도구 (`pkg/mcpserver`)
   - `filesystem_reader`: 소스코드 파일 내용 안전 조회 도구 (`pkg/mcpserver`)
+  - `read_file`: 특정 파일 전체 내용 및 라인 범위(start_line, end_line) 정밀 조회 도구 (`pkg/mcpserver`, `pkg/analyzer`)
+  - `code_search`: 소스코드 키워드, 함수/타입명, 정규표현식(Regex) 패턴 검색 도구 (`pkg/mcpserver`, `pkg/analyzer`)
 - **MCP 실행 모드**:
   - `./auto-docs`: 일반 자동 보고서 생성 및 Wiki 자동 배포 모드
   - `./auto-docs --mcp-server`: Stdio 기반 JSON-RPC 2.0 독립 MCP 서버 구동 모드
