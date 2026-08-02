@@ -22,7 +22,7 @@ inputs:
   goal_prompt:
     description: 'Goal prompt and persona for LLM doc generation'
     required: false
-    default: '우리는 해당 코드를 보고 실행 여부를 떠나서, 현재 구현되어있는 코드를 기반으로 review하는 주니어 엔지니어이다. 우리는 구현되어있는 코드를 기반으로, 사용설명서 및 구현 명세서를 작성하여 wiki에다가 올려야하는 임무가 있다.'
+    default: 'Based on the implemented code, create a user manual and an implementation specification, and upload them to the wiki.'
 
 runs:
   using: 'docker'
