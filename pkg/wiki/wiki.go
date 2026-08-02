@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/Mireu-Lab/auto-docs/pkg/config"
 )
@@ -61,7 +62,11 @@ func (w *WikiDeployer) Deploy(reportContent string) error {
 
 	cmdPush := exec.Command("git", "-C", tmpDir, "push", "origin", "HEAD")
 	if out, err := cmdPush.CombinedOutput(); err != nil {
-		return fmt.Errorf("git push failed: %s (%w)", string(out), err)
+		outStr := string(out)
+		if strings.Contains(outStr, "403") || strings.Contains(outStr, "You are not allowed to write") {
+			return fmt.Errorf("git push failed (403 Forbidden): %s\n💡 [auto-docs] Tip: GitLab CI_JOB_TOKEN does not have Wiki write permissions by default. Please set PROJECT_ACCESS_TOKEN or GITLAB_TOKEN in CI/CD Variables with write_repository scope.", outStr)
+		}
+		return fmt.Errorf("git push failed: %s (%w)", outStr, err)
 	}
 
 	fmt.Println("[WikiDeployer] Wiki successfully updated and deployed!")

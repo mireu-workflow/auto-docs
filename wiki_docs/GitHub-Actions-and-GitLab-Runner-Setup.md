@@ -147,13 +147,15 @@ generate-wiki-docs:
     - docker run --rm \
         -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
         -e GEMINI_MODEL="gemma-4" \
-        -e WIKI_REPO_URL="https://oauth2:${GITLAB_WIKI_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" \
+        -e GITLAB_TOKEN="${GITLAB_TOKEN}" \
+        -e CI_SERVER_HOST="${CI_SERVER_HOST}" \
+        -e CI_PROJECT_PATH="${CI_PROJECT_PATH}" \
         -e WIKI_TYPE="gitlab" \
         -e GIT_USERNAME="gitlab-ci-bot" \
         -e GIT_EMAIL="gitlab-ci@example.com" \
         -v $(pwd):/app/repo \
         -e REPO_PATH="/app/repo" \
-        "$IMAGE_TAG_LATEST"
+        "registry.gitlab.com/none-labs/gitworkflow-mcp/auto-docs:latest"
 ```
 
 ---
