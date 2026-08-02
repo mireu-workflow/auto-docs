@@ -96,28 +96,64 @@ For GitLab projects, `auto-docs` supports containerized execution via `Dockerfil
 
 ```yaml
 stages:
-  - docs
+  - test
+  - build-container
+  - generate-docs
 
-auto-docs-wiki:
-  stage: docs
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IMAGE_TAG_LATEST: $CI_REGISTRY_IMAGE:latest
+
+# 1. Go 소스코드 유닛 테스트
+test:
+  stage: test
+  image: golang:1.26-alpine
+  script:
+    - apk add --no-cache git build-base
+    - go test -v ./...
+
+# 2. Docker 컨테이너 빌드 및 GitLab Container Registry 배포
+build-container:
+  stage: build-container
   image: docker:24.0.5
   services:
-    - docker:24.0.5-dind
+    - name: docker:24.0.5-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - echo "Building Docker image: $IMAGE_TAG"
+    - docker build -t "$IMAGE_TAG" -t "$IMAGE_TAG_LATEST" .
+    - echo "Pushing Docker image to Container Registry..."
+    - docker push "$IMAGE_TAG"
+    - docker push "$IMAGE_TAG_LATEST"
   only:
     - main
     - master
+    - tags
+
+# 3. auto-docs 실행 및 Wiki 자동 업데이트
+generate-wiki-docs:
+  stage: generate-docs
+  image: docker:24.0.5
+  services:
+    - name: docker:24.0.5-dind
+  rules:
+    - if: '$GEMINI_API_KEY != null && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master")'
+      when: manual
+      allow_failure: true
   script:
-    - docker build -t auto-docs:latest .
     - docker run --rm \
         -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
         -e GEMINI_MODEL="gemma-4" \
-        -e WIKI_REPO_URL="https://oauth2:${GITLAB_WIKI_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.wiki.git" \
+        -e WIKI_REPO_URL="https://oauth2:${GITLAB_WIKI_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" \
         -e WIKI_TYPE="gitlab" \
         -e GIT_USERNAME="gitlab-ci-bot" \
         -e GIT_EMAIL="gitlab-ci@example.com" \
         -v $(pwd):/app/repo \
         -e REPO_PATH="/app/repo" \
-        auto-docs:latest
+        "$IMAGE_TAG_LATEST"
 ```
 
 ---
