@@ -91,12 +91,29 @@ func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview strin
 
 	promptBuilder.WriteString(fmt.Sprintf(`
 ---
-### Report Requirements:
-1. Act strictly according to the defined goal & persona: "%s"
-2. Write a comprehensive User Manual (사용설명서) and Implementation Specification (구현 명세서) based on the current codebase.
-3. Include Executive Summary, Architecture & Flow Overview, Module/API Specifications, Setup & Usage Guide.
-4. Output Language: MUST be written entirely in '%s'.
-5. Provide response ONLY in Markdown Wiki format with clean headings and code blocks.
+### Report Format & Structure Requirements:
+You MUST follow the exact Markdown structure below (matching the official Wiki template format):
+
+1. **Title**: '🚀 {Project Name} 사용설명 가이드 (Usage Guide)' (or translated to target language)
+2. **Project Summary**: 1-2 sentence high-level overview of the project & LLM + MCP engine capabilities.
+3. **📌 주요 특징 (Key Features)**:
+   - Bulleted/numbered list describing key features and modules found in code.
+4. **📖 Wiki 문서 목차 (Navigation)**:
+   - Bulleted list of documentation sub-sections and guide links.
+5. **⚡ 빠른 시작 (Quick Start)**:
+   - **1. 환경 변수 설정 / 주요 설정**: Markdown table with columns: '환경 변수' (Env Var / Setting), '설명' (Description), '기본값' (Default Value).
+   - **2. 실행 Command**: Code blocks showing execution commands (e.g. Go, Docker, CI/CD).
+6. **🏗️ 시스템 아키텍처 (Architecture)**:
+   - Structured diagram (Mermaid format if applicable) or detailed system workflow explanation based on codebase.
+7. **🔍 모듈 및 구현 명세 (Implementation Specification)**:
+   - Review and specification of key packages, structs, functions, and modules based on the code analysis.
+8. **🤝 문의 및 기여 (Contributing & Support)**:
+   - Contribution guide, MR/PR submission instructions, and repository links.
+
+### Additional Rules:
+- Act strictly according to the defined goal & persona: "%s"
+- Output Language: MUST be written entirely in '%s'.
+- Provide response ONLY in Markdown Wiki format with clean headings, tables, and code blocks.
 `, g.cfg.GoalPrompt, g.cfg.DocsLanguage))
 
 	reqBody := geminiRequest{
