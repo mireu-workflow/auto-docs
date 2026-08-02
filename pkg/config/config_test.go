@@ -20,8 +20,36 @@ func TestLoadConfig(t *testing.T) {
 		t.Errorf("expected GeminiAPIKey 'test-api-key', got '%s'", cfg.GeminiAPIKey)
 	}
 
+	if cfg.DocsLanguage != "ko" {
+		t.Errorf("expected default DocsLanguage 'ko', got '%s'", cfg.DocsLanguage)
+	}
+
+	if cfg.GoalPrompt == "" {
+		t.Errorf("expected non-empty default GoalPrompt")
+	}
+
 	if err := cfg.Validate(); err != nil {
 		t.Errorf("config validation failed: %v", err)
+	}
+}
+
+func TestLoadConfigCustomPromptAndLang(t *testing.T) {
+	os.Setenv("DOCS_LANGUAGE", "en")
+	os.Setenv("GOAL_PROMPT", "Custom prompt mission")
+	defer os.Unsetenv("DOCS_LANGUAGE")
+	defer os.Unsetenv("GOAL_PROMPT")
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.DocsLanguage != "en" {
+		t.Errorf("expected DocsLanguage 'en', got '%s'", cfg.DocsLanguage)
+	}
+
+	if cfg.GoalPrompt != "Custom prompt mission" {
+		t.Errorf("expected GoalPrompt 'Custom prompt mission', got '%s'", cfg.GoalPrompt)
 	}
 }
 

@@ -50,6 +50,17 @@ Github Actions, Gitlab Runner, 뭐 잘 되면 Jenkins에서도 돌아 갈수있�
   - `./auto-docs`: 일반 자동 보고서 생성 및 Wiki 자동 배포 모드
   - `./auto-docs --mcp-server`: Stdio 기반 JSON-RPC 2.0 독립 MCP 서버 구동 모드
 
+### ⚙️ 주요 설정 및 환경 변수 (Environment Variables)
+
+| 환경 변수 | 설명 | 기본값 |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | Google AI Studio API 키 (필수) | - |
+| `GEMINI_MODEL` | 사용할 Gemini/Gemma 모델 | `gemma-4` |
+| `DOCS_LANGUAGE` | 생성될 문서 언어 (`ko`, `en`, `ja` 등) | `ko` |
+| `GOAL_PROMPT` | LLM 페르소나 및 문서 작성 목표 프롬프트 | *"우리는 해당 코드를 보고 실행 여부를 떠나서, 현재 구현되어있는 코드를 기반으로 review하는 주니어 엔지니어이다. 우리는 구현되어있는 코드를 기반으로, 사용설명서 및 구현 명세서를 작성하여 wiki에다가 올려야하는 임무가 있다."* |
+| `WIKI_REPO_URL` | 대상 Wiki 저장소 Git URL | CI 환경변수 자동 감지 |
+| `WIKI_TYPE` | Wiki 저장소 타입 (`github` 또는 `gitlab`) | `github` |
+
 ### 📚 official Wiki & CI/CD Documentation
 - 📖 [auto-docs GitLab Wiki 공식 사용설명서](https://gitlab.com/none-labs/gitworkflow-mcp/auto-docs/-/wikis)
 - [GitHub Actions & GitLab Runner 셋업 가이드](wiki_docs/GitHub-Actions-and-GitLab-Runner-Setup.md)

@@ -55,7 +55,13 @@ type geminiResponse struct {
 
 func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string) (string, error) {
 	var promptBuilder strings.Builder
-	promptBuilder.WriteString("You are an expert technical documentation writer. Analyze the following source code and git diff, then generate a comprehensive, structured Markdown technical report suitable for a GitHub/GitLab Wiki.\n\n")
+	promptBuilder.WriteString("## Goal & Persona\n")
+	promptBuilder.WriteString(g.cfg.GoalPrompt)
+	promptBuilder.WriteString("\n\n")
+
+	promptBuilder.WriteString(fmt.Sprintf("## Target Language\nPlease write the entire documentation report in **%s** language.\n\n", g.cfg.DocsLanguage))
+
+	promptBuilder.WriteString("You are an expert technical documentation writer acting under the above persona. Analyze the following source code and git diff, then generate a comprehensive, structured Markdown technical report suitable for a GitHub/GitLab Wiki.\n\n")
 	
 	promptBuilder.WriteString("## Project Overview\n")
 	promptBuilder.WriteString(projectOverview)
@@ -83,15 +89,15 @@ func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview strin
 		promptBuilder.WriteString("\n```\n\n")
 	}
 
-	promptBuilder.WriteString(`
+	promptBuilder.WriteString(fmt.Sprintf(`
 ---
 ### Report Requirements:
-1. Executive Summary of the codebase & recent changes.
-2. Architecture / Flow overview.
-3. API & Module specifications derived from code.
-4. Setup & Usage instructions.
+1. Act strictly according to the defined goal & persona: "%s"
+2. Write a comprehensive User Manual (사용설명서) and Implementation Specification (구현 명세서) based on the current codebase.
+3. Include Executive Summary, Architecture & Flow Overview, Module/API Specifications, Setup & Usage Guide.
+4. Output Language: MUST be written entirely in '%s'.
 5. Provide response ONLY in Markdown Wiki format with clean headings and code blocks.
-`)
+`, g.cfg.GoalPrompt, g.cfg.DocsLanguage))
 
 	reqBody := geminiRequest{
 		Contents: []geminiContent{

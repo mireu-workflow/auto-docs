@@ -15,6 +15,8 @@ type Config struct {
 	WikiType     string // "github" or "gitlab"
 	GitUsername  string
 	GitEmail     string
+	DocsLanguage string // "ko", "en", etc.
+	GoalPrompt   string // Persona & Mission goal prompt
 }
 
 func LoadConfig() (*Config, error) {
@@ -39,6 +41,23 @@ func LoadConfig() (*Config, error) {
 		wikiType = "github"
 	}
 
+	docsLanguage := os.Getenv("DOCS_LANGUAGE")
+	if docsLanguage == "" {
+		docsLanguage = os.Getenv("LANGUAGE")
+	}
+	if docsLanguage == "" {
+		docsLanguage = "ko"
+	}
+
+	defaultGoalPrompt := "우리는 해당 코드를 보고 실행 여부를 떠나서, 현재 구현되어있는 코드를 기반으로 review하는 주니어 엔지니어이다. 우리는 구현되어있는 코드를 기반으로, 사용설명서 및 구현 명세서를 작성하여 wiki에다가 올려야하는 임무가 있다."
+	goalPrompt := os.Getenv("GOAL_PROMPT")
+	if goalPrompt == "" {
+		goalPrompt = os.Getenv("CUSTOM_GOAL_PROMPT")
+	}
+	if goalPrompt == "" {
+		goalPrompt = defaultGoalPrompt
+	}
+
 	resolvedWikiURL := ResolveWikiRepoURL(wikiRepoURL)
 
 	return &Config{
@@ -49,6 +68,8 @@ func LoadConfig() (*Config, error) {
 		WikiType:     wikiType,
 		GitUsername:  os.Getenv("GIT_USERNAME"),
 		GitEmail:     os.Getenv("GIT_EMAIL"),
+		DocsLanguage: docsLanguage,
+		GoalPrompt:   goalPrompt,
 	}, nil
 }
 
