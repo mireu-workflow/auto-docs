@@ -2,7 +2,6 @@ stages:
   - test
   - build-container
   - generate-docs
-  - deploy
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -71,21 +70,3 @@ generate-wiki-docs:
       -v $(pwd):/app/repo
       -e REPO_PATH="/app/repo"
       "$IMAGE_TAG_LATEST"
-
-# 4. deploy-mcp 클라우드 서버리스 배포
-deploy-gcp-cloudrun:
-  stage: deploy
-  image: google/cloud-sdk:alpine
-  variables:
-    GCP_REGION: "asia-northeast3"
-    GCP_SERVICE_NAME: "auto-docs"
-  script:
-    - 'echo "Authenticating to Google Cloud..."'
-    - 'echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=- || true'
-    - 'gcloud config set project "$GCP_PROJECT_ID" || true'
-    - 'echo "Deploying container image to GCP Cloud Run..."'
-    - 'gcloud run deploy "$GCP_SERVICE_NAME" --image "${IMAGE_TAG_LATEST}" --platform managed --region "${GCP_REGION}" --allow-unauthenticated --set-env-vars "GEMINI_API_KEY=${GEMINI_API_KEY}" || echo "Skipping active gcloud deployment (set GCP_SA_KEY & GCP_PROJECT_ID secrets in GitLab)"'
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"'
-      when: manual
-      allow_failure: true
