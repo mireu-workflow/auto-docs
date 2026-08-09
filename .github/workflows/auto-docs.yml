@@ -29,4 +29,13 @@ jobs:
           WIKI_REPO_URL: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git"
           GIT_USERNAME: "github-actions[bot]"
           GIT_EMAIL: "github-actions[bot]@users.noreply.github.com"
-        run: ./auto-docs
+        run: |
+          ./auto-docs || docker run --rm \
+            -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
+            -e GEMINI_MODEL="${GEMINI_MODEL}" \
+            -e WIKI_REPO_URL="${WIKI_REPO_URL}" \
+            -e GIT_USERNAME="${GIT_USERNAME}" \
+            -e GIT_EMAIL="${GIT_EMAIL}" \
+            -v $(pwd):/app/repo \
+            -e REPO_PATH="/app/repo" \
+            registry.gitlab.com/none-labs/gitworkflow-mcp/auto-docs:latest
