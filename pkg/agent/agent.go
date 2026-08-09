@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/Mireu-Lab/auto-docs/pkg/config"
+	"github.com/Mireu-Lab/auto-docs/pkg/searcher"
 )
 
 type AIClient interface {
-	GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string) (string, error)
+	GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult) (string, error)
 }
 
 type GeminiClient struct {
@@ -54,7 +55,7 @@ type geminiResponse struct {
 	} `json:"error,omitempty"`
 }
 
-func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string) (string, error) {
+func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult) (string, error) {
 	var promptBuilder strings.Builder
 	promptBuilder.WriteString("## Goal & Persona\n")
 	promptBuilder.WriteString(g.cfg.GoalPrompt)
@@ -62,11 +63,18 @@ func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview strin
 
 	promptBuilder.WriteString(fmt.Sprintf("## Target Language\nPlease write the entire documentation report in **%s** language.\n\n", g.cfg.DocsLanguage))
 
-	promptBuilder.WriteString("You are an expert technical documentation writer acting under the above persona. Analyze the following source code and git diff, then generate a comprehensive, structured Markdown technical report suitable for a GitHub/GitLab Wiki.\n\n")
+	promptBuilder.WriteString("You are an expert technical documentation writer acting under the above persona. Analyze the following source code, git diff, and DuckDuckGo live web search results, then generate a comprehensive, structured Markdown technical report suitable for a GitHub/GitLab Wiki.\n\n")
 	
 	promptBuilder.WriteString("## Project Overview\n")
 	promptBuilder.WriteString(projectOverview)
 	promptBuilder.WriteString("\n\n")
+
+	if len(webSearchResults) > 0 {
+		promptBuilder.WriteString("## Live Web Search Context (DuckDuckGo Search Results)\n")
+		for i, res := range webSearchResults {
+			promptBuilder.WriteString(fmt.Sprintf("%d. [%s](%s)\n   Snippet: %s\n\n", i+1, res.Title, res.URL, res.Snippet))
+		}
+	}
 
 	if diffSummary != "" {
 		promptBuilder.WriteString("## Git Diff / Recent Changes\n```diff\n")

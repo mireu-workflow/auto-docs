@@ -1,0 +1,29 @@
+# 예시 2: GitLab Runner에서 Docker Container 기반 auto-docs Wiki 자동 배포
+stages:
+  - generate-docs
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+generate-wiki-docs:
+  stage: generate-docs
+  image: docker:24.0.5
+  services:
+    - name: docker:24.0.5-dind
+  rules:
+    - if: '$GEMINI_API_KEY != null && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master")'
+      when: on_success
+  script:
+    - >
+      docker run --rm
+      -e GEMINI_API_KEY="${GEMINI_API_KEY}"
+      -e GEMINI_MODEL="gemma-4-26b-a4b-it"
+      -e GITLAB_TOKEN="${GITLAB_TOKEN}"
+      -e CI_SERVER_HOST="${CI_SERVER_HOST}"
+      -e CI_PROJECT_PATH="${CI_PROJECT_PATH}"
+      -e CI_JOB_TOKEN="${CI_JOB_TOKEN}"
+      -e WIKI_TYPE="gitlab"
+      -v $(pwd):/app/repo
+      -e REPO_PATH="/app/repo"
+      registry.gitlab.com/none-labs/gitworkflow-mcp/auto-docs:latest

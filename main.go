@@ -11,6 +11,7 @@ import (
 	"github.com/Mireu-Lab/auto-docs/pkg/analyzer"
 	"github.com/Mireu-Lab/auto-docs/pkg/config"
 	"github.com/Mireu-Lab/auto-docs/pkg/mcpserver"
+	"github.com/Mireu-Lab/auto-docs/pkg/searcher"
 	"github.com/Mireu-Lab/auto-docs/pkg/wiki"
 )
 
@@ -34,7 +35,7 @@ func main() {
 	}
 
 	// 2. Normal Auto-Docs Generator Mode
-	fmt.Println("🚀 Starting auto-docs report generator with MCP Engine...")
+	fmt.Println("🚀 Starting auto-docs report generator with MCP Engine & DuckDuckGo Search...")
 
 	codeAnalyzer := analyzer.NewCodeAnalyzer(cfg.RepoPath)
 	ctx := context.Background()
@@ -57,7 +58,20 @@ func main() {
 	codeSnippets, _ := codeAnalyzer.ReadSourceFiles(changedFiles)
 	overview, _ := codeAnalyzer.CollectProjectOverview()
 
-	// 3. Generate Report via Gemini / Gemma4 AI Agent
+	// 3. DuckDuckGo Web Search for live external documentation enrichment
+	ddgSearcher := searcher.NewDuckDuckGoSearcher()
+	var webResults []searcher.SearchResult
+	searchQuery := "Model Context Protocol Go SDK technical documentation best practices"
+	fmt.Printf("🔍 Performing DuckDuckGo search for live tech context: '%s'...\n", searchQuery)
+	searchResults, searchErr := ddgSearcher.Search(ctx, searchQuery)
+	if searchErr != nil {
+		log.Printf("Warning: DuckDuckGo search failed: %v", searchErr)
+	} else {
+		webResults = searchResults
+		fmt.Printf("🌐 DuckDuckGo search retrieved %d external reference results.\n", len(webResults))
+	}
+
+	// 4. Generate Report via Gemini / Gemma4 AI Agent
 	if err := cfg.Validate(); err != nil {
 		fmt.Printf("⚠️  Skipping AI API call: %v\n", err)
 		fmt.Println("Writing default structured report template...")
@@ -70,12 +84,12 @@ func main() {
 	}
 
 	aiAgent := agent.NewGeminiClient(cfg)
-	report, err := aiAgent.GenerateReport(ctx, overview, diffSummary, codeSnippets)
+	report, err := aiAgent.GenerateReport(ctx, overview, diffSummary, codeSnippets, webResults)
 	if err != nil {
 		log.Fatalf("Failed to generate report from AI Agent: %v", err)
 	}
 
-	// 4. Deploy Report to Wiki
+	// 5. Deploy Report to Wiki
 	deployer := wiki.NewWikiDeployer(cfg)
 	if err := deployer.Deploy(report); err != nil {
 		log.Fatalf("Failed to deploy wiki report: %v", err)

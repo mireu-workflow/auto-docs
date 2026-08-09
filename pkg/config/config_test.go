@@ -79,3 +79,24 @@ func TestResolveWikiRepoURL(t *testing.T) {
 		t.Errorf("expected '%s', got '%s'", expectedAuto, resolvedAuto)
 	}
 }
+
+func TestResolveWikiRepoURL_GitHub(t *testing.T) {
+	os.Setenv("GITHUB_TOKEN", "ghp_secret_token_123")
+	os.Setenv("GITHUB_REPOSITORY", "my-org/my-repo")
+	defer os.Unsetenv("GITHUB_TOKEN")
+	defer os.Unsetenv("GITHUB_REPOSITORY")
+
+	// Case 1: Empty raw URL in GitHub Actions env
+	resolvedAuto := config.ResolveWikiRepoURL("")
+	expectedAuto := "https://x-access-token:ghp_secret_token_123@github.com/my-org/my-repo.wiki.git"
+	if resolvedAuto != expectedAuto {
+		t.Errorf("expected '%s', got '%s'", expectedAuto, resolvedAuto)
+	}
+
+	// Case 2: Plain github.com URL needing token injection
+	rawURL := "https://github.com/my-org/my-repo.wiki.git"
+	resolvedRaw := config.ResolveWikiRepoURL(rawURL)
+	if resolvedRaw != expectedAuto {
+		t.Errorf("expected '%s', got '%s'", expectedAuto, resolvedRaw)
+	}
+}

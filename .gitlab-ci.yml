@@ -56,7 +56,7 @@ generate-wiki-docs:
     - >
       docker run --rm
       -e GEMINI_API_KEY="${GEMINI_API_KEY}"
-      -e GEMINI_MODEL="gemma-4"
+      -e GEMINI_MODEL="gemma-4-26b-a4b-it"
       -e PROJECT_ACCESS_TOKEN="${PROJECT_ACCESS_TOKEN}"
       -e GITLAB_TOKEN="${GITLAB_TOKEN}"
       -e GITLAB_WIKI_TOKEN="${GITLAB_WIKI_TOKEN}"

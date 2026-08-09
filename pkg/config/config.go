@@ -27,7 +27,7 @@ func LoadConfig() (*Config, error) {
 
 	modelName := os.Getenv("GEMINI_MODEL")
 	if modelName == "" {
-		modelName = "gemma-4"
+		modelName = "gemma-4-26b-a4b-it"
 	}
 
 	repoPath := os.Getenv("REPO_PATH")
@@ -58,6 +58,38 @@ func LoadConfig() (*Config, error) {
 		goalPrompt = defaultGoalPrompt
 	}
 
+	gitUser := os.Getenv("GIT_USERNAME")
+	if gitUser == "" {
+		if os.Getenv("GITHUB_ACTIONS") == "true" || os.Getenv("GITHUB_REPOSITORY") != "" {
+			actor := os.Getenv("GITHUB_ACTOR")
+			if actor != "" {
+				gitUser = actor
+			} else {
+				gitUser = "github-actions[bot]"
+			}
+		} else if os.Getenv("GITLAB_CI") == "true" || os.Getenv("CI_PROJECT_PATH") != "" {
+			user := os.Getenv("GITLAB_USER_LOGIN")
+			if user != "" {
+				gitUser = user
+			} else {
+				gitUser = "gitlab-ci-bot"
+			}
+		} else {
+			gitUser = "auto-docs[bot]"
+		}
+	}
+
+	gitEmail := os.Getenv("GIT_EMAIL")
+	if gitEmail == "" {
+		if os.Getenv("GITHUB_ACTIONS") == "true" || os.Getenv("GITHUB_REPOSITORY") != "" {
+			gitEmail = "github-actions[bot]@users.noreply.github.com"
+		} else if os.Getenv("GITLAB_CI") == "true" || os.Getenv("CI_PROJECT_PATH") != "" {
+			gitEmail = "gitlab-ci@example.com"
+		} else {
+			gitEmail = "auto-docs[bot]@users.noreply.github.com"
+		}
+	}
+
 	resolvedWikiURL := ResolveWikiRepoURL(wikiRepoURL)
 
 	return &Config{
@@ -66,8 +98,8 @@ func LoadConfig() (*Config, error) {
 		RepoPath:     repoPath,
 		WikiRepoURL:  resolvedWikiURL,
 		WikiType:     wikiType,
-		GitUsername:  os.Getenv("GIT_USERNAME"),
-		GitEmail:     os.Getenv("GIT_EMAIL"),
+		GitUsername:  gitUser,
+		GitEmail:     gitEmail,
 		DocsLanguage: docsLanguage,
 		GoalPrompt:   goalPrompt,
 	}, nil
@@ -75,18 +107,29 @@ func LoadConfig() (*Config, error) {
 
 // ResolveWikiRepoURL automatically resolves or sanitizes the Wiki Repository URL.
 // It replaces restricted tokens (like gitlab-ci-token) with write access tokens if available,
-// or auto-constructs the URL from GitLab CI / GitHub Actions environment variables.
+// injects GitHub or GitLab tokens into raw HTTP URLs, or auto-constructs the URL from CI environment variables.
 func ResolveWikiRepoURL(rawURL string) string {
-	writeTokens := []string{
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghToken == "" {
+		ghToken = os.Getenv("GH_TOKEN")
+	}
+	if ghToken == "" {
+		ghToken = os.Getenv("PERSONAL_ACCESS_TOKEN")
+	}
+	if ghToken == "" {
+		ghToken = os.Getenv("PAT")
+	}
+
+	glTokens := []string{
 		os.Getenv("PROJECT_ACCESS_TOKEN"),
 		os.Getenv("GITLAB_TOKEN"),
 		os.Getenv("GITLAB_WIKI_TOKEN"),
 		os.Getenv("PERSONAL_ACCESS_TOKEN"),
 	}
-	var token string
-	for _, t := range writeTokens {
+	var glToken string
+	for _, t := range glTokens {
 		if strings.TrimSpace(t) != "" {
-			token = strings.TrimSpace(t)
+			glToken = strings.TrimSpace(t)
 			break
 		}
 	}
@@ -94,23 +137,41 @@ func ResolveWikiRepoURL(rawURL string) string {
 	ciHost := os.Getenv("CI_SERVER_HOST")
 	ciPath := os.Getenv("CI_PROJECT_PATH")
 	ciJobToken := os.Getenv("CI_JOB_TOKEN")
+	ghRepo := os.Getenv("GITHUB_REPOSITORY")
 
 	// 1. If rawURL is provided explicitly
 	if rawURL != "" {
 		// If rawURL uses gitlab-ci-token and a write token is available, replace it.
-		if token != "" && (strings.Contains(rawURL, "gitlab-ci-token") || strings.Contains(rawURL, "gitlab-ci-token:[MASKED]")) {
+		if glToken != "" && (strings.Contains(rawURL, "gitlab-ci-token") || strings.Contains(rawURL, "gitlab-ci-token:[MASKED]")) {
 			re := regexp.MustCompile(`https://gitlab-ci-token:[^@]*@`)
 			if re.MatchString(rawURL) {
-				return re.ReplaceAllString(rawURL, fmt.Sprintf("https://oauth2:%s@", token))
+				return re.ReplaceAllString(rawURL, fmt.Sprintf("https://oauth2:%s@", glToken))
 			}
 		}
+
+		// Inject GitHub Token if rawURL is standard github.com HTTPS without auth credentials
+		if ghToken != "" && strings.HasPrefix(rawURL, "https://github.com/") {
+			return strings.Replace(rawURL, "https://github.com/", fmt.Sprintf("https://x-access-token:%s@github.com/", ghToken), 1)
+		}
+
+		// Inject GitLab Token if rawURL is standard gitlab HTTPS without auth credentials
+		if strings.HasPrefix(rawURL, "https://gitlab.") || strings.Contains(rawURL, "gitlab") {
+			if !strings.Contains(rawURL, "@") {
+				if glToken != "" {
+					return strings.Replace(rawURL, "https://", fmt.Sprintf("https://oauth2:%s@", glToken), 1)
+				} else if ciJobToken != "" {
+					return strings.Replace(rawURL, "https://", fmt.Sprintf("https://gitlab-ci-token:%s@", ciJobToken), 1)
+				}
+			}
+		}
+
 		return rawURL
 	}
 
 	// 2. Auto-detect GitLab CI environment if WIKI_REPO_URL is empty
 	if ciHost != "" && ciPath != "" {
-		if token != "" {
-			return fmt.Sprintf("https://oauth2:%s@%s/%s.wiki.git", token, ciHost, ciPath)
+		if glToken != "" {
+			return fmt.Sprintf("https://oauth2:%s@%s/%s.wiki.git", glToken, ciHost, ciPath)
 		} else if ciJobToken != "" {
 			fmt.Println("⚠️  [auto-docs] Warning: WIKI_REPO_URL not set. Auto-generated URL using CI_JOB_TOKEN. Note: CI_JOB_TOKEN may lack Wiki push permissions (HTTP 403). Set PROJECT_ACCESS_TOKEN or GITLAB_TOKEN in CI/CD variables for write access.")
 			return fmt.Sprintf("https://gitlab-ci-token:%s@%s/%s.wiki.git", ciJobToken, ciHost, ciPath)
@@ -118,11 +179,6 @@ func ResolveWikiRepoURL(rawURL string) string {
 	}
 
 	// 3. Auto-detect GitHub Actions environment if WIKI_REPO_URL is empty
-	ghRepo := os.Getenv("GITHUB_REPOSITORY")
-	ghToken := os.Getenv("GITHUB_TOKEN")
-	if ghToken == "" {
-		ghToken = os.Getenv("GH_TOKEN")
-	}
 	if ghRepo != "" && ghToken != "" {
 		return fmt.Sprintf("https://x-access-token:%s@github.com/%s.wiki.git", ghToken, ghRepo)
 	}

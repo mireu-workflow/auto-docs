@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-generate-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      wiki: write
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -25,17 +28,9 @@ jobs:
       - name: Run auto-docs & Update Wiki
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: "gemma-4"
-          WIKI_REPO_URL: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git"
-          GIT_USERNAME: "github-actions[bot]"
-          GIT_EMAIL: "github-actions[bot]@users.noreply.github.com"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GEMINI_MODEL: "gemma-4-26b-a4b-it"
         run: |
-          ./auto-docs || docker run --rm \
-            -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
-            -e GEMINI_MODEL="${GEMINI_MODEL}" \
-            -e WIKI_REPO_URL="${WIKI_REPO_URL}" \
-            -e GIT_USERNAME="${GIT_USERNAME}" \
-            -e GIT_EMAIL="${GIT_EMAIL}" \
-            -v $(pwd):/app/repo \
-            -e REPO_PATH="/app/repo" \
-            registry.gitlab.com/none-labs/gitworkflow-mcp/auto-docs:latest
+          ./auto-docs
+

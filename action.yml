@@ -4,12 +4,16 @@ inputs:
   gemini_api_key:
     description: 'Google AI Studio / Gemini API Key'
     required: true
+  github_token:
+    description: 'GitHub Token for Wiki repository access and deployment'
+    required: false
+    default: '${{ github.token }}'
   gemini_model:
     description: 'Gemini/Gemma model name to use'
     required: false
-    default: 'gemma-4'
+    default: 'gemma-4-26b-a4b-it'
   wiki_repo_url:
-    description: 'Target Wiki Git Repository URL'
+    description: 'Target Wiki Git Repository URL (optional, auto-generated if omitted)'
     required: false
   wiki_type:
     description: 'Wiki type (github or gitlab)'
@@ -22,15 +26,17 @@ inputs:
   goal_prompt:
     description: 'Goal prompt and persona for LLM doc generation'
     required: false
-    default: 'Based on the implemented code, create a user manual and an implementation specification, and upload them to the wiki.'
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
     GEMINI_API_KEY: ${{ inputs.gemini_api_key }}
+    GITHUB_TOKEN: ${{ inputs.github_token }}
+    GITHUB_REPOSITORY: ${{ github.repository }}
     GEMINI_MODEL: ${{ inputs.gemini_model }}
     WIKI_REPO_URL: ${{ inputs.wiki_repo_url }}
     WIKI_TYPE: ${{ inputs.wiki_type }}
     DOCS_LANGUAGE: ${{ inputs.docs_language }}
     GOAL_PROMPT: ${{ inputs.goal_prompt }}
+
