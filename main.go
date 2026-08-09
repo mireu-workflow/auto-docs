@@ -86,7 +86,16 @@ func main() {
 	aiAgent := agent.NewGeminiClient(cfg)
 	report, err := aiAgent.GenerateReport(ctx, overview, diffSummary, codeSnippets, webResults)
 	if err != nil {
-		log.Fatalf("Failed to generate report from AI Agent: %v", err)
+		log.Printf("⚠️ Warning: AI Agent report generation failed: %v", err)
+		log.Println("Deploying default structured report template as fallback...")
+		deployer := wiki.NewWikiDeployer(cfg)
+		_ = os.MkdirAll("wiki_output", 0755)
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report\n\n## Overview\n%s\n\n## Changed Files\n%v\n", overview, changedFiles)
+		if err := deployer.Deploy(templateReport); err != nil {
+			log.Fatalf("Failed to deploy wiki report: %v", err)
+		}
+		fmt.Println("✅ auto-docs processing completed with fallback report!")
+		return
 	}
 
 	// 5. Deploy Report to Wiki
