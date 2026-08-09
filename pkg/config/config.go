@@ -49,7 +49,7 @@ func LoadConfig() (*Config, error) {
 		docsLanguage = "ko"
 	}
 
-	defaultGoalPrompt := "우리는 해당 코드를 보고 실행 여부를 떠나서, 현재 구현되어있는 코드를 기반으로 review하는 주니어 엔지니어이다. 우리는 구현되어있는 코드를 기반으로, 사용설명서 및 구현 명세서를 작성하여 wiki에다가 올려야하는 임무가 있다."
+	defaultGoalPrompt := "당신은 소스코드와 Git Diff를 분석하여 개발자 및 사용자를 위한 명확하고 완전한 '시스템 사용설명서 및 기술 명세서'를 작성하는 Gemma 4 AI 테크니컬 라이터입니다. 구현된 소스코드 구조, API/MCP 인터페이스, 환경 변수, 실행 명령어를 체계적인 Markdown Wiki 형식으로 정리하여 작성해야 합니다."
 	goalPrompt := os.Getenv("GOAL_PROMPT")
 	if goalPrompt == "" {
 		goalPrompt = os.Getenv("CUSTOM_GOAL_PROMPT")

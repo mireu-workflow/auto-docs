@@ -93,39 +93,62 @@ func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview strin
 	promptBuilder.WriteString(fmt.Sprintf(`
 ---
 ### CRITICAL OUTPUT RULE:
-- DO NOT output any reasoning steps, planning notes, preambles, metadata summaries, bulleted lists of project stack analysis, or conversational filler text.
+- DO NOT output any reasoning steps, thinking notes, preambles, summaries of intent, or conversational wrapper text.
 - Start IMMEDIATELY with the main Markdown title header ('# 🚀 ...') and output ONLY pure Markdown document content.
-- Your entire response will be written directly into a Wiki Markdown file.
+- Your entire response will be written directly into a GitHub/GitLab Wiki Markdown file.
 
-### Report Format & Structure Requirements:
-You MUST follow the exact Markdown structure below (matching the official Wiki template format):
+### Required Wiki Documentation Structure (위키 설명서 필수 구조):
+You MUST follow the structured format below for the Wiki manual:
 
-1. **Title**: '# 🚀 {Project Name} 사용설명 가이드 (Usage Guide)' (or translated to target language)
-2. **Project Summary**: 1-2 sentence high-level overview of the project & LLM + MCP engine capabilities.
-3. **📌 주요 특징 (Key Features)**:
-   - Bulleted/numbered list describing key features and modules found in code.
-4. **📖 Wiki 문서 목차 (Navigation)**:
-   - Bulleted list of documentation sub-sections and guide links.
-5. **⚡ 빠른 시작 (Quick Start)**:
-   - **1. 환경 변수 설정 / 주요 설정**: Markdown table with columns: '환경 변수' (Env Var / Setting), '설명' (Description), '기본값' (Default Value).
-   - **2. 실행 Command**: Code blocks showing execution commands (e.g. Go, Docker, CI/CD).
-6. **🏗️ 시스템 아키텍처 (Architecture)**:
-   - Structured diagram (Mermaid format if applicable) or detailed system workflow explanation based on codebase.
-7. **🔍 모듈 및 구현 명세 (Implementation Specification)**:
-   - Review and specification of key packages, structs, functions, and modules based on the code analysis.
-8. **🤝 문의 및 기여 (Contributing & Support)**:
-   - Contribution guide, MR/PR submission instructions, and repository links.
+# 🚀 {Project Name} 사용설명서 & 시스템 명세서
 
+> **[개요 요약]**: 프로젝트의 핵심 역할과 SLM / MCP 연동 목적을 1~2문장으로 요약하여 작성합니다.
+
+## 📖 1. 개요 및 주요 기능 (Overview & Key Features)
+- **프로젝트 개요**: 시스템의 핵심 목표 및 주요 활용 시나리오.
+- **주요 기능 (Key Features)**:
+  - 기능 1: 상세 설명
+  - 기능 2: 상세 설명
+  - 기능 3: 상세 설명
+
+## 🏗️ 2. 시스템 아키텍처 & 워크플로우 (Architecture & Workflow)
+- **아키텍처 구조도**: mermaid ('graph TD' 또는 'sequenceDiagram') 코드 블록으로 데이터 흐름과 모듈 간 관계를 시각화합니다.
+- **핵심 컴포넌트**: 소스코드 기반 주요 구성 요소 및 동작 원리 설명.
+
+## ⚡ 3. 빠른 시작 가이드 (Quick Start Guide)
+### 3.1. 사전 요구사항 (Prerequisites)
+- 런타임 환경 (Go 1.26+, Docker 24+), CLI 도구 및 필요 계정/권한.
+### 3.2. 환경 변수 및 설정 (Environment Variables)
+- 마크다운 표 형식:
+  | 환경 변수명 | 필수 여부 | 기본값 | 설명 |
+  | :--- | :---: | :--- | :--- |
+### 3.3. 실행 방법 (Usage Commands)
+- **CLI 실행**: 'go run main.go ...' 또는 바이너리 실행 커맨드.
+- **Docker 실행**: 'docker run ...' 명령 커맨드.
+- **MCP Server 실행 (지원 시)**: MCP stdio 실행 커맨드.
+
+## 🔍 4. 상세 모듈 및 API/MCP 명세 (Module & API Specification)
+- 소스코드에 정의된 주요 패키지, 구조체(Struct), 주요 함수(Function), CLI 플래그(Flags) 및 MCP 도구(Tools) 상세 명세.
+- 입력(Input)/출력(Output) 데이터 형식 및 반환 패턴.
+
+## 🔄 5. CI/CD & 자동화 파이프라인 (CI/CD Pipeline)
+- **GitHub Actions (.github/workflows/)**: 트리거 조건, 단계별 빌드/테스트/배포 및 Secret 설정 (GEMINI_API_KEY, WIKI_REPO_URL, GCP_SA_KEY).
+- **GitLab CI (.gitlab-ci.yml)**: 파이프라인 스테이지 (test, build-container, generate-docs, deploy) 구성 및 Runner 동작 원리.
+
+## 🛠️ 6. 문제 해결 및 FAQ (Troubleshooting & FAQ)
+- 실행 중 발생 가능한 예외 사례 (예: Wiki Push HTTP 403, API Key 미설정, GCP 권한 오차) 및 해결 방법 (GitHub Alert 상자 > [!TIP] 또는 > [!WARNING] 활용).
+
+---
 ### Additional Rules:
 - Act strictly according to the defined goal & persona: "%s"
 - Output Language: MUST be written entirely in '%s'.
-- Provide response ONLY in Markdown Wiki format with clean headings, tables, and code blocks.
+- Provide response ONLY in Markdown Wiki format with clean headings, tables, mermaid diagrams, and code blocks.
 `, g.cfg.GoalPrompt, g.cfg.DocsLanguage))
 
 	reqBody := geminiRequest{
 		SystemInstruction: &geminiContent{
 			Parts: []geminiPart{
-				{Text: "You are a strict technical documentation generator. Output ONLY pure Markdown documentation. NEVER output reasoning notes, planning bullet points, preambles, summaries of intent, or conversational wrapper text before or after the report. Start directly with '# 🚀'."},
+				{Text: "You are Gemma 4, an expert AI technical writer. Output ONLY pure Markdown Wiki documentation. NEVER output reasoning notes, planning bullet points, preambles, summaries of intent, or conversational wrapper text before or after the report. Start directly with '# 🚀'."},
 			},
 		},
 		Contents: []geminiContent{

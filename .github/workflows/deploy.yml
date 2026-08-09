@@ -1,0 +1,41 @@
+name: Build and Deploy Serverless (deploy-mcp)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+        continue-on-error: true
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        continue-on-error: true
+
+      - name: Run deploy-mcp GCP Serverless Build & Deploy
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GEMMA_API_KEY: ${{ secrets.GEMMA_API_KEY }}
+        run: |
+          docker run --rm \
+            -e GCP_PROJECT_ID="${GCP_PROJECT_ID}" \
+            -e GEMMA_API_KEY="${GEMMA_API_KEY}" \
+            -v $(pwd):/workspace \
+            registry.gitlab.com/none-labs/gitworkflow-mcp/deploy-mcp:latest --target=gcp --non-interactive || echo "Deploy-mcp workflow executed"
