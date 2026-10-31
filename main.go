@@ -13,6 +13,7 @@ import (
 	"github.com/Mireu-Lab/auto-docs/pkg/analyzer"
 	"github.com/Mireu-Lab/auto-docs/pkg/config"
 	"github.com/Mireu-Lab/auto-docs/pkg/mcpserver"
+	"github.com/Mireu-Lab/auto-docs/pkg/notifier"
 	"github.com/Mireu-Lab/auto-docs/pkg/searcher"
 	"github.com/Mireu-Lab/auto-docs/pkg/wiki"
 )
@@ -102,6 +103,7 @@ func main() {
 	}
 
 	// 4. Fetch Previous Wiki Documentation for incremental updates
+	failureNotifier := notifier.NewFailureNotifier(cfg, codeAnalyzer)
 	deployer := wiki.NewWikiDeployer(cfg)
 	previousWiki, fetchErr := deployer.FetchExistingWikiContent()
 	if fetchErr == nil && previousWiki != "" {
@@ -145,6 +147,9 @@ func main() {
 			changedFiles,
 		)
 		if err := deployer.Deploy(templateReport); err != nil {
+			if notifyErr := failureNotifier.NotifyWikiFailure(ctx, err); notifyErr != nil {
+				log.Printf("⚠️ Warning: Failed to trigger issue alert: %v", notifyErr)
+			}
 			log.Fatalf("Failed to deploy wiki report: %v", err)
 		}
 		fmt.Println("✅ auto-docs processing completed with fallback report!")
@@ -153,7 +158,11 @@ func main() {
 
 	// 6. Deploy Report to Wiki
 	if err := deployer.Deploy(report); err != nil {
-		log.Fatalf("Failed to deploy wiki report: %v", err)
+		log.Printf("❌ Failed to deploy wiki report: %v", err)
+		if notifyErr := failureNotifier.NotifyWikiFailure(ctx, err); notifyErr != nil {
+			log.Printf("⚠️ Warning: Failed to trigger issue alert: %v", notifyErr)
+		}
+		log.Fatalf("Wiki deployment aborted due to error: %v", err)
 	}
 
 	fmt.Println("✅ auto-docs processing completed successfully!")
