@@ -16,6 +16,7 @@ import (
 
 type AIClient interface {
 	GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult) (string, error)
+	GenerateReportWithContext(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult, existingWiki string, branchName string, updatedAt time.Time) (string, error)
 }
 
 type GeminiClient struct {
@@ -56,6 +57,10 @@ type geminiResponse struct {
 }
 
 func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult) (string, error) {
+	return g.GenerateReportWithContext(ctx, projectOverview, diffSummary, codeSnippets, webSearchResults, "", "", time.Now())
+}
+
+func (g *GeminiClient) GenerateReportWithContext(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult, existingWiki string, branchName string, updatedAt time.Time) (string, error) {
 	var promptBuilder strings.Builder
 	promptBuilder.WriteString("## Goal & Persona\n")
 	promptBuilder.WriteString(g.cfg.GoalPrompt)
@@ -68,6 +73,30 @@ func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview strin
 	promptBuilder.WriteString("## Project Overview\n")
 	promptBuilder.WriteString(projectOverview)
 	promptBuilder.WriteString("\n\n")
+
+	if branchName != "" || !updatedAt.IsZero() {
+		promptBuilder.WriteString("## Execution & Ops Pipeline Metadata\n")
+		if branchName != "" {
+			promptBuilder.WriteString(fmt.Sprintf("- **Target Git Branch**: `%s`\n", branchName))
+		}
+		if !updatedAt.IsZero() {
+			promptBuilder.WriteString(fmt.Sprintf("- **Updated At (UTC)**: %s\n", updatedAt.UTC().Format("2006-01-02 15:04:05 MST")))
+			promptBuilder.WriteString(fmt.Sprintf("- **Updated At (KST)**: %s\n", updatedAt.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST")))
+		}
+		promptBuilder.WriteString("\n")
+	}
+
+	if existingWiki != "" {
+		promptBuilder.WriteString("## Previously Existing Wiki Documentation (Reference for Incremental Update)\n")
+		promptBuilder.WriteString("> The following documentation was previously generated. You MUST review it to understand previously documented features, avoid removing valid content, reconcile similar or duplicate functionality, and perform a seamless incremental update.\n\n")
+		promptBuilder.WriteString("```markdown\n")
+		if len(existingWiki) > 8000 {
+			promptBuilder.WriteString(existingWiki[:8000] + "\n...[truncated]...")
+		} else {
+			promptBuilder.WriteString(existingWiki)
+		}
+		promptBuilder.WriteString("\n```\n\n")
+	}
 
 	if len(webSearchResults) > 0 {
 		promptBuilder.WriteString("## Live Web Search Context (DuckDuckGo Search Results)\n")
@@ -108,9 +137,12 @@ func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview strin
 ### Required Wiki Documentation Structure (위키 설명서 필수 구조):
 You MUST follow the structured format below for the Wiki manual:
 
-# 🚀 {Project Name} 사용설명서 & 시스템 명세서
+# 🚀 (Project Name) 사용설명서 & 시스템 명세서
 
 > **[개요 요약]**: 프로젝트의 핵심 역할과 SLM / MCP 연동 목적을 1~2문장으로 요약하여 작성합니다.
+> 
+> * **최종 업데이트 일시 (Last Updated)**: (Execution Timestamp KST / UTC)
+> * **대상 브랜치 (Git Branch)**: '(Branch Name)'
 
 ## 📖 1. 개요 및 주요 기능 (Overview & Key Features)
 - **프로젝트 개요**: 시스템의 핵심 목표 및 주요 활용 시나리오.

@@ -19,6 +19,39 @@ func NewWikiDeployer(cfg *config.Config) *WikiDeployer {
 	return &WikiDeployer{cfg: cfg}
 }
 
+// FetchExistingWikiContent attempts to retrieve previous Wiki content (Home.md)
+// from local wiki_output or by cloning the remote wiki repository.
+func (w *WikiDeployer) FetchExistingWikiContent() (string, error) {
+	// 1. Check local file first
+	localPath := filepath.Join("wiki_output", "Home.md")
+	if data, err := os.ReadFile(localPath); err == nil && len(data) > 0 {
+		return string(data), nil
+	}
+
+	// 2. If WikiRepoURL is set, clone into temp dir and read Home.md
+	if w.cfg.WikiRepoURL != "" {
+		if strings.ToLower(w.cfg.WikiType) == "github" {
+			w.setupGitHubCLIAuth()
+		}
+
+		tmpDir, err := os.MkdirTemp("", "auto-docs-fetch-*")
+		if err != nil {
+			return "", err
+		}
+		defer os.RemoveAll(tmpDir)
+
+		cmdClone := exec.Command("git", "clone", "--depth", "1", w.cfg.WikiRepoURL, tmpDir)
+		if err := cmdClone.Run(); err == nil {
+			homePath := filepath.Join(tmpDir, "Home.md")
+			if data, err := os.ReadFile(homePath); err == nil {
+				return string(data), nil
+			}
+		}
+	}
+
+	return "", nil
+}
+
 func (w *WikiDeployer) Deploy(reportContent string) error {
 	// 1. If WikiType is gitlab and glab CLI is installed, attempt glab API deployment first
 	if strings.ToLower(w.cfg.WikiType) == "gitlab" {

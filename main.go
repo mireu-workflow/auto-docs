@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/Mireu-Lab/auto-docs/pkg/agent"
 	"github.com/Mireu-Lab/auto-docs/pkg/analyzer"
@@ -57,6 +58,8 @@ func main() {
 	}
 	codeSnippets, _ := codeAnalyzer.ReadSourceFiles(changedFiles)
 	overview, _ := codeAnalyzer.CollectProjectOverview()
+	gitMeta := codeAnalyzer.GetGitMetadata(ctx)
+	opsExecutionTime := time.Now()
 
 	// 3. DuckDuckGo Web Search for live external documentation enrichment
 	ddgSearcher := searcher.NewDuckDuckGoSearcher()
@@ -71,26 +74,41 @@ func main() {
 		fmt.Printf("🌐 DuckDuckGo search retrieved %d external reference results.\n", len(webResults))
 	}
 
-	// 4. Generate Report via Gemini / Gemma4 AI Agent
+	// 4. Fetch Previous Wiki Documentation for incremental updates
+	deployer := wiki.NewWikiDeployer(cfg)
+	previousWiki, fetchErr := deployer.FetchExistingWikiContent()
+	if fetchErr == nil && previousWiki != "" {
+		fmt.Printf("📚 Found existing Wiki documentation (%d bytes). Reconciling previous features...\n", len(previousWiki))
+	}
+
+	// 5. Generate Report via Gemini / Gemma4 AI Agent
 	if err := cfg.Validate(); err != nil {
 		fmt.Printf("⚠️  Skipping AI API call: %v\n", err)
 		fmt.Println("Writing default structured report template...")
 		
-		deployer := wiki.NewWikiDeployer(cfg)
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report\n\n## Overview\n%s\n\n## Changed Files\n%v\n", overview, changedFiles)
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report\n\n> **최종 업데이트 일시**: %s (KST)\n> **대상 브랜치**: `%s`\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
+			gitMeta.BranchName,
+			overview,
+			changedFiles,
+		)
 		_ = deployer.Deploy(templateReport)
 		return
 	}
 
 	aiAgent := agent.NewGeminiClient(cfg)
-	report, err := aiAgent.GenerateReport(ctx, overview, diffSummary, codeSnippets, webResults)
+	report, err := aiAgent.GenerateReportWithContext(ctx, overview, diffSummary, codeSnippets, webResults, previousWiki, gitMeta.BranchName, opsExecutionTime)
 	if err != nil {
 		log.Printf("⚠️ Warning: AI Agent report generation failed: %v", err)
 		log.Println("Deploying default structured report template as fallback...")
-		deployer := wiki.NewWikiDeployer(cfg)
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report\n\n## Overview\n%s\n\n## Changed Files\n%v\n", overview, changedFiles)
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report\n\n> **최종 업데이트 일시**: %s (KST)\n> **대상 브랜치**: `%s`\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
+			gitMeta.BranchName,
+			overview,
+			changedFiles,
+		)
 		if err := deployer.Deploy(templateReport); err != nil {
 			log.Fatalf("Failed to deploy wiki report: %v", err)
 		}
@@ -98,8 +116,7 @@ func main() {
 		return
 	}
 
-	// 5. Deploy Report to Wiki
-	deployer := wiki.NewWikiDeployer(cfg)
+	// 6. Deploy Report to Wiki
 	if err := deployer.Deploy(report); err != nil {
 		log.Fatalf("Failed to deploy wiki report: %v", err)
 	}

@@ -163,3 +163,53 @@ func (a *CodeAnalyzer) SearchCode(ctx context.Context, query string, isRegex boo
 
 	return result, nil
 }
+
+type GitMetadata struct {
+	BranchName string
+	CommitHash string
+	Author     string
+}
+
+// GetGitMetadata retrieves the current branch name, commit hash, and author.
+func (a *CodeAnalyzer) GetGitMetadata(ctx context.Context) GitMetadata {
+	meta := GitMetadata{
+		BranchName: "unknown",
+		CommitHash: "unknown",
+	}
+
+	// 1. Branch name from CI environment or git command
+	if b := os.Getenv("GITHUB_REF_NAME"); b != "" {
+		meta.BranchName = b
+	} else if b := os.Getenv("CI_COMMIT_REF_NAME"); b != "" {
+		meta.BranchName = b
+	} else {
+		cmdBranch := exec.CommandContext(ctx, "git", "rev-parse", "--abbrev-ref", "HEAD")
+		cmdBranch.Dir = a.RepoPath
+		if out, err := cmdBranch.Output(); err == nil {
+			meta.BranchName = strings.TrimSpace(string(out))
+		}
+	}
+
+	// 2. Commit hash
+	if c := os.Getenv("GITHUB_SHA"); c != "" {
+		meta.CommitHash = c
+	} else if c := os.Getenv("CI_COMMIT_SHA"); c != "" {
+		meta.CommitHash = c
+	} else {
+		cmdHash := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
+		cmdHash.Dir = a.RepoPath
+		if out, err := cmdHash.Output(); err == nil {
+			meta.CommitHash = strings.TrimSpace(string(out))
+		}
+	}
+
+	// 3. Author / Actor
+	if act := os.Getenv("GITHUB_ACTOR"); act != "" {
+		meta.Author = act
+	} else if act := os.Getenv("GITLAB_USER_LOGIN"); act != "" {
+		meta.Author = act
+	}
+
+	return meta
+}
+
