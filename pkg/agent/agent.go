@@ -41,7 +41,8 @@ type geminiContent struct {
 }
 
 type geminiPart struct {
-	Text string `json:"text"`
+	Text    string `json:"text"`
+	Thought bool   `json:"thought,omitempty"`
 }
 
 type geminiResponse struct {
@@ -242,7 +243,20 @@ You MUST follow the structured format below for the Wiki manual:
 		return "", fmt.Errorf("empty candidate response from Gemini API")
 	}
 
-	rawReport := gResp.Candidates[0].Content.Parts[0].Text
+	// Find the non-thought part (Gemma 4 outputs reasoning with thought: true in earlier parts)
+	var rawReport string
+	parts := gResp.Candidates[0].Content.Parts
+	for _, p := range parts {
+		if !p.Thought && strings.TrimSpace(p.Text) != "" {
+			rawReport += p.Text
+		}
+	}
+
+	// Fallback to last part if all were marked thought
+	if strings.TrimSpace(rawReport) == "" {
+		rawReport = parts[len(parts)-1].Text
+	}
+
 	return cleanReportOutput(rawReport), nil
 }
 
