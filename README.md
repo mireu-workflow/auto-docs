@@ -1,61 +1,188 @@
 # 🚀 auto-docs
 
-Google AI Studio Gemma 4 모델 및 MCP(Model Context Protocol)를 활용하여 소스코드와 Git Diff를 분석하고, GitHub/GitLab Wiki에 기술 보고서 및 시스템 사용설명서를 자동 생성/배포하는 CI/CD 자동화 솔루션입니다.
+[![CI/CD Status](https://github.com/mireu-workflow/auto-docs/actions/workflows/auto-docs.yml/badge.svg)](https://github.com/mireu-workflow/auto-docs/actions/workflows/auto-docs.yml)
+[![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![MCP Protocol](https://img.shields.io/badge/MCP-1.0.0-blueviolet?style=flat)](https://modelcontextprotocol.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**auto-docs** is an enterprise-grade AI technical documentation generator and automated deployment engine. Powered by Google AI Studio **Gemma 4 / Gemini**, the **Model Context Protocol (MCP)**, and real-time **DuckDuckGo** technical research, it analyzes your codebase structure, inspects Git diffs, reconciles prior documentation, and automatically publishes comprehensive Markdown user manuals and technical specs to **GitHub / GitLab Wikis**.
 
 ---
 
-## 💡 프로젝트 핵심 특징
+## 🌟 Key Highlights
 
-- **Runner & Actions 토큰 기반 자동 배포**: `GITHUB_TOKEN` (GitHub Actions) 또는 `CI_JOB_TOKEN` / `PROJECT_ACCESS_TOKEN` / `GITLAB_TOKEN` (GitLab Runner)을 감지하여 별도의 복잡한 URL 구성 없이 저장소 Wiki에 바로 배포합니다.
-- **Gemma 4 & Gemini AI 기반 문서화**: 최신 Gemma 4 / Gemini 모델을 연동하여 아키텍처 구조도(Mermaid), API/MCP 명세, 실행 방법, 환경 변수 표를 정교한 Markdown Wiki 포맷으로 작성합니다.
-- **Stdio MCP Server 지원**: `./auto-docs --mcp-server` 플래그로 실행 시 JSON-RPC 2.0 기반 Stdio MCP Server로 동작하여 파일 읽기, 정규식 소스 검색, Git Diff 분석, DuckDuckGo 라이브 웹 검색 도구를 제공합니다.
-
----
-
-## 🛠️ 구현 기능 Checklist
-
-1. **AI Studio 기반 Gemma4 모델 연동 및 에이전트 환경 구축**
-   - [x] **Google AI Studio API 연동**: REST API 기반 Gemma4 호출 클라이언트 구현 ([`pkg/agent`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/pkg/agent))
-   - [x] **보안 인증 처리**: `GEMINI_API_KEY` (또는 `AI_STUDIO_API_KEY`) 환경 변수 및 CI/CD Secret 주입 ([`pkg/config`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/pkg/config))
-
-2. **MCP (Model Context Protocol) 서버 구성 및 도구 제공**
-   - [x] **코드 분석 특화 MCP 서버**: Stdio JSON-RPC 2.0 MCP 서버 구동 ([`pkg/mcpserver`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/pkg/mcpserver))
-   - [x] **FileSystem & Git Tools**: 파일 정밀 조회(`read_file`), 코드 검색(`code_search`), Git Diff 분석 도구 제공
-
-3. **위키(Wiki) 기반 리포트 생성 및 자동 배포**
-   - [x] **마크다운 리포트 생성**: 분석 정보를 Markdown Wiki 포맷으로 자동 생성 ([`pkg/agent`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/pkg/agent))
-   - [x] **GitHub / GitLab Wiki Token 기반 자동 배포**: CI/CD Runner 토큰으로 Wiki Git 저장소 Clone -> Commit -> Push 자동화 ([`pkg/wiki`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/pkg/wiki))
-   - [x] **Wiki 네비게이션 관리**: `Home.md` 및 `_Sidebar.md` 네비게이션 링크 자동 반영
-
-4. **CI/CD 환경 내 실행 자동화**
-   - [x] **GitHub Actions 연동**: Composite Action ([`action.yml`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/action.yml)) 및 Workflow ([`.github/workflows/auto-docs.yml`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/.github/workflows/auto-docs.yml))
-   - [x] **GitLab Runner 연동**: [`.gitlab-ci.yml`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/.gitlab-ci.yml) 및 Multi-stage Docker 이미지 ([`Dockerfile`](file:///home/limmireu1214/_projects/GitWorkflow-MCP/auto-docs/Dockerfile))
+- **Seamless Dual Mode**:
+  - **Pipeline Mode (Default)**: Automatically analyzes repository diffs, performs live web context enrichment, runs AI synthesis, and publishes to GitHub/GitLab Wikis.
+  - **Stdio MCP Server Mode (`--mcp-server`)**: Runs as a standard Model Context Protocol (JSON-RPC 2.0) server over stdio for IDEs, Claude Desktop, and Antigravity Agent tools.
+- **Incremental Context Reconciliation**:
+  - Automatically fetches previously published Wiki content (`Home.md`) before generation, ensuring existing features are reconciled rather than lost.
+- **Metadata & History Tracking**:
+  - Tracks and timestamps operational pipeline runs with target Git branches, release tags/versions, and execution times (UTC / KST).
+- **Flexible Deployment Strategies (Option A & B)**:
+  - **Option A (`wiki-only`, Default)**: Pure Wiki Git repository deployment (`*.wiki.git`) with graceful fallback handling.
+  - **Option B (`repo-docs`)**: Automatically commits and pushes generated reports to `docs/Home.md` directly in the source repository if remote Wikis are uninitialized (404).
+- **Multi-Platform Support**:
+  - Native integration with **GitHub CLI (`gh`)** and **GitLab CLI (`glab`)**, as well as fallback Git transport.
+- **Multilingual Support**:
+  - Defaults to English (`en`) with on-the-fly override via CLI (`-lang en`, `-lang ko`, `-lang ja`, `-lang zh`).
 
 ---
 
-## ⚙️ 주요 설정 및 환경 변수 (Environment Variables)
+## 🏗️ Architecture
 
-| 환경 변수 | 설명 | 기본값 |
-| --- | --- | --- |
-| `GEMINI_API_KEY` | Google AI Studio API 키 (필수) | - |
-| `GITHUB_TOKEN` | GitHub Actions 자동 주입 토큰 (GitHub Wiki 자동 배포용) | `${{ github.token }}` |
-| `GITLAB_TOKEN` / `PROJECT_ACCESS_TOKEN` | GitLab Project/Personal Access Token (GitLab Wiki Push 권한) | - |
-| `GEMINI_MODEL` | 사용할 Gemini/Gemma 모델 | `gemma-4-26b-a4b-it` |
-| `DOCS_LANGUAGE` | 생성될 문서 언어 (`ko`, `en`, `ja` 등) | `ko` |
-| `WIKI_REPO_URL` | Target Wiki Git Repository URL | Runner 환경 변수 기반 자동 감지 |
-| `WIKI_TYPE` | Wiki 저장소 타입 (`github` 또는 `gitlab`) | `github` |
+```mermaid
+flowchart TD
+    subgraph Trigger & CLI
+        A[Git Push / CI Event / Local CLI] -->|--mcp-server| B[Stdio MCP Server]
+        A -->|Default Execution| C[auto-docs Generator Engine]
+    end
+
+    subgraph Analysis & Context Enrichment
+        C --> D[CodeAnalyzer: Git Diff & AST Reader]
+        C --> E[DuckDuckGoSearcher: Live Web Research]
+        C --> F[WikiDeployer: Fetch Prior Wiki Content]
+    end
+
+    subgraph AI Documentation Synthesis
+        D & E & F --> G[Gemini / Gemma 4 Client]
+        G -->|Persona & Goal Prompt| H[Technical Report & User Manual]
+    end
+
+    subgraph Publishing & Deployment
+        H --> I{Deploy Mode?}
+        I -->|Option A: Wiki-Only| J[gh / glab / Git Push -> *.wiki.git]
+        I -->|Option B: Repo-Docs| K[Auto Commit & Push -> docs/Home.md]
+        I -->|Fallback / No Remote| L[Local ./wiki_output/Home.md]
+    end
+```
 
 ---
 
-## 📚 Official Wiki Documentation
+## ⚡ Quick Start
 
-- 📖 [auto-docs GitLab Wiki 공식 사용설명서](https://gitlab.com/none-labs/gitworkflow-mcp/auto-docs/-/wikis)
+### 1. Run via Go CLI
 
+```bash
+# Clone the repository
+git clone https://github.com/mireu-workflow/auto-docs.git
+cd auto-docs
+
+# Export your Google AI Studio / Gemini API Key
+export GEMINI_API_KEY="your-gemini-api-key"
+
+# Generate documentation in English (Default)
+go run main.go
+
+# Generate documentation in Korean or other languages
+go run main.go -lang ko
+
+# Run with Option B (Fallback directly into docs/Home.md)
+go run main.go -mode B
+```
+
+### 2. Run as an MCP Server
+
+Integrate `auto-docs` directly into Claude Desktop or Antigravity by adding it to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "auto-docs": {
+      "command": "/usr/local/bin/auto-docs",
+      "args": ["--mcp-server"],
+      "env": {
+        "REPO_PATH": "/path/to/your/workspace"
+      }
+    }
+  }
+}
+```
+
+#### Available MCP Tools
+
+| Tool Name | Description |
+| :--- | :--- |
+| `git_diff_analyzer` | Analyzes repository Git diffs and changed file lists |
+| `filesystem_reader` | Reads code files with size limit safety |
+| `read_file` | Reads exact line ranges of specific code files |
+| `code_search` | Performs symbol and regex queries using git grep |
+| `duckduckgo_search` | Real-time web search for framework/library technical context |
 
 ---
 
-## 📂 예시 Runner 및 Action 셋업 파일 (Example Setup Files)
+## ⚙️ Configuration & Environment Variables
 
-- 🐙 [GitHub Actions Workflow 예시 (`examples/github-action-workflow.yml`)](examples/github-action-workflow.yml)
-- 🦊 [GitLab Runner Pipeline 예시 (`examples/gitlab-ci-runner.yml`)](examples/gitlab-ci-runner.yml)
-- 🖥️ [Self-Hosted Runner / Jenkins 스크립트 예시 (`examples/self-hosted-runner.sh`)](examples/self-hosted-runner.sh)
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `GEMINI_API_KEY` | Google AI Studio / Gemini API Key (Required for AI generation) | *None* |
+| `GITHUB_TOKEN` | GitHub Token for authenticated Wiki deployment | `${{ github.token }}` in Actions |
+| `GITLAB_TOKEN` | GitLab Token (`PROJECT_ACCESS_TOKEN` / `GITLAB_WIKI_TOKEN`) | *None* |
+| `GEMINI_MODEL` | Target Gemini / Gemma model | `gemma-4-26b-a4b-it` |
+| `DOCS_LANGUAGE` | Output documentation language (`en`, `ko`, `ja`, `zh`, etc.) | `en` |
+| `DEPLOY_MODE` | Deployment strategy: `A` (`wiki-only`) or `B` (`repo-docs`) | `A` |
+| `WIKI_REPO_URL` | Explicit target Wiki Git URL | *Auto-detected from CI context* |
+| `WIKI_TYPE` | Platform type (`github` or `gitlab`) | `github` |
+| `REPO_PATH` | Path to the repository root | `.` |
+
+---
+
+## 🔄 CI/CD Automation
+
+### GitHub Actions (`.github/workflows/auto-docs.yml`)
+
+```yaml
+name: auto-docs Wiki Generator
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-generate-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for repository & wiki push
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Build auto-docs CLI
+        run: go build -o auto-docs main.go
+
+      - name: Run auto-docs & Update Wiki
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GEMINI_MODEL: "gemma-4-26b-a4b-it"
+          DOCS_LANGUAGE: "en"
+        run: ./auto-docs
+```
+
+### GitLab CI (`.gitlab-ci.yml`)
+
+Refer to [`examples/gitlab-ci-runner.yml`](examples/gitlab-ci-runner.yml) for full containerized GitLab runner setups.
+
+---
+
+## 📖 Official Wiki
+
+View live, AI-generated documentation created by this repository:
+- 🌐 [Official GitHub Wiki](https://github.com/mireu-workflow/auto-docs/wiki)
+
+---
+
+## 🤝 Contributing & License
+
+Contributions, feature suggestions, and bug reports are welcome! Please feel free to open an issue or pull request.
+
+Distributed under the **MIT License**. See `LICENSE` for more information.

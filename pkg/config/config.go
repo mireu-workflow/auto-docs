@@ -47,10 +47,10 @@ func LoadConfig() (*Config, error) {
 		docsLanguage = os.Getenv("LANGUAGE")
 	}
 	if docsLanguage == "" {
-		docsLanguage = "ko"
+		docsLanguage = "en"
 	}
 
-	defaultGoalPrompt := "당신은 소스코드와 Git Diff를 분석하여 개발자 및 사용자를 위한 명확하고 완전한 '시스템 사용설명서 및 기술 명세서'를 작성하는 Gemma 4 AI 테크니컬 라이터입니다. 구현된 소스코드 구조, API/MCP 인터페이스, 환경 변수, 실행 명령어를 체계적인 Markdown Wiki 형식으로 정리하여 작성해야 합니다."
+	defaultGoalPrompt := "You are a professional technical documentation writer and engineer analyzing source code and Git diffs to author comprehensive, developer-ready user guides and technical specifications. Structure modules, architecture, API/MCP interfaces, environment configurations, and operational commands into an enterprise-grade Markdown Wiki manual."
 	goalPrompt := os.Getenv("GOAL_PROMPT")
 	if goalPrompt == "" {
 		goalPrompt = os.Getenv("CUSTOM_GOAL_PROMPT")

@@ -1,4 +1,4 @@
-# 예시 2: GitLab Runner에서 Docker Container 기반 auto-docs Wiki 자동 배포
+# Example: Automated Wiki Deployment via GitLab CI Runner
 stages:
   - generate-docs
 
@@ -24,6 +24,7 @@ generate-wiki-docs:
       -e CI_PROJECT_PATH="${CI_PROJECT_PATH}"
       -e CI_JOB_TOKEN="${CI_JOB_TOKEN}"
       -e WIKI_TYPE="gitlab"
+      -e DOCS_LANGUAGE="en"
       -v $(pwd):/app/repo
       -e REPO_PATH="/app/repo"
-      registry.gitlab.com/none-labs/gitworkflow-mcp/auto-docs:latest
+      registry.gitlab.com/mireu-workflow/auto-docs:latest

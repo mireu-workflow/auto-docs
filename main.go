@@ -114,11 +114,12 @@ func main() {
 		fmt.Println("Writing default structured report template...")
 		
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **프로젝트 버전 (Version)**: `%s`\n> **대상 브랜치 (Git Branch)**: `%s`\n> **최종 업데이트 일시 (Last Updated)**: %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **Project Version**: `%s`\n> **Target Branch**: `%s`\n> **Last Updated**: %s (UTC) / %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
 			gitMeta.Version,
 			gitMeta.BranchName,
 			gitMeta.Version,
 			gitMeta.BranchName,
+			opsExecutionTime.UTC().Format("2006-01-02 15:04:05 MST"),
 			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
 			overview,
 			changedFiles,
@@ -133,11 +134,12 @@ func main() {
 		log.Printf("⚠️ Warning: AI Agent report generation failed: %v", err)
 		log.Println("Deploying default structured report template as fallback...")
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **프로젝트 버전 (Version)**: `%s`\n> **대상 브랜치 (Git Branch)**: `%s`\n> **최종 업데이트 일시 (Last Updated)**: %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **Project Version**: `%s`\n> **Target Branch**: `%s`\n> **Last Updated**: %s (UTC) / %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
 			gitMeta.Version,
 			gitMeta.BranchName,
 			gitMeta.Version,
 			gitMeta.BranchName,
+			opsExecutionTime.UTC().Format("2006-01-02 15:04:05 MST"),
 			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
 			overview,
 			changedFiles,

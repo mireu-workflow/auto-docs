@@ -138,50 +138,50 @@ func (g *GeminiClient) GenerateReportWithContext(ctx context.Context, projectOve
 - Start IMMEDIATELY with the main Markdown title header ('# 🚀 ...') and output ONLY pure Markdown document content.
 - Your entire response will be written directly into a GitHub/GitLab Wiki Markdown file.
 
-### Required Wiki Documentation Structure (위키 설명서 필수 구조):
+### Required Wiki Documentation Structure:
 You MUST follow the structured format below for the Wiki manual:
 
-# 🚀 (Project Name) v(Version) ((Branch Name)) 사용설명서 & 시스템 명세서
+# 🚀 (Project Name) v(Version) ((Branch Name)) User Guide & Technical Specification
 
-> **[개요 요약]**: 프로젝트의 핵심 역할과 SLM / MCP 연동 목적을 1~2문장으로 요약하여 작성합니다.
+> **[Executive Summary]**: Summarize the core mission of the project and SLM / MCP integration purpose in 1-2 concise sentences.
 > 
-> * **프로젝트 버전 (Version)**: '(Version)'
-> * **대상 브랜치 (Git Branch)**: '(Branch Name)'
-> * **최종 업데이트 일시 (Last Updated)**: (Execution Timestamp KST / UTC)
+> * **Project Version**: '(Version)'
+> * **Target Branch**: '(Branch Name)'
+> * **Last Updated**: (Execution Timestamp UTC / KST)
 
-## 📖 1. 개요 및 주요 기능 (Overview & Key Features)
-- **프로젝트 개요**: 시스템의 핵심 목표 및 주요 활용 시나리오.
-- **주요 기능 (Key Features)**:
-  - 기능 1: 상세 설명
-  - 기능 2: 상세 설명
-  - 기능 3: 상세 설명
+## 📖 1. Overview & Key Features
+- **Project Overview**: System mission and key use cases.
+- **Key Features**:
+  - Feature 1: Detailed explanation
+  - Feature 2: Detailed explanation
+  - Feature 3: Detailed explanation
 
-## 🏗️ 2. 시스템 아키텍처 & 워크플로우 (Architecture & Workflow)
-- **아키텍처 구조도**: mermaid ('graph TD' 또는 'sequenceDiagram') 코드 블록으로 데이터 흐름과 모듈 간 관계를 시각화합니다.
-- **핵심 컴포넌트**: 소스코드 기반 주요 구성 요소 및 동작 원리 설명.
+## 🏗️ 2. System Architecture & Workflow
+- **Architecture Diagram**: Visualize data flow and module relationships using Mermaid ('graph TD' or 'sequenceDiagram') code block.
+- **Core Components**: In-depth explanation of primary components and operational principles based on the codebase.
 
-## ⚡ 3. 빠른 시작 가이드 (Quick Start Guide)
-### 3.1. 사전 요구사항 (Prerequisites)
-- 런타임 환경 (Go 1.26+, Docker 24+), CLI 도구 및 필요 계정/권한.
-### 3.2. 환경 변수 및 설정 (Environment Variables)
-- 마크다운 표 형식:
-  | 환경 변수명 | 필수 여부 | 기본값 | 설명 |
+## ⚡ 3. Quick Start Guide
+### 3.1. Prerequisites
+- Runtime environment (e.g., Go 1.26+, Docker 24+), CLI tools, and required accounts/credentials.
+### 3.2. Environment Variables & Configurations
+- Markdown table format:
+  | Variable | Required | Default | Description |
   | :--- | :---: | :--- | :--- |
-### 3.3. 실행 방법 (Usage Commands)
-- **CLI 실행**: 'go run main.go ...' 또는 바이너리 실행 커맨드.
-- **Docker 실행**: 'docker run ...' 명령 커맨드.
-- **MCP Server 실행 (지원 시)**: MCP stdio 실행 커맨드.
+### 3.3. Usage Commands
+- **CLI Execution**: 'go run main.go ...' or binary execution commands.
+- **Docker Execution**: 'docker run ...' commands.
+- **MCP Server Mode (if supported)**: MCP stdio execution commands.
 
-## 🔍 4. 상세 모듈 및 API/MCP 명세 (Module & API Specification)
-- 소스코드에 정의된 주요 패키지, 구조체(Struct), 주요 함수(Function), CLI 플래그(Flags) 및 MCP 도구(Tools) 상세 명세.
-- 입력(Input)/출력(Output) 데이터 형식 및 반환 패턴.
+## 🔍 4. Module & API/MCP Specification
+- Detailed specification of packages, structs, major functions, CLI flags, and MCP tools defined in the codebase.
+- Input/output data schemas and return patterns.
 
-## 🔄 5. CI/CD & 자동화 파이프라인 (CI/CD Pipeline)
-- **GitHub Actions (.github/workflows/)**: 트리거 조건, 단계별 빌드/테스트/배포 및 Secret 설정 (GEMINI_API_KEY, WIKI_REPO_URL, GCP_SA_KEY).
-- **GitLab CI (.gitlab-ci.yml)**: 파이프라인 스테이지 (test, build-container, generate-docs, deploy) 구성 및 Runner 동작 원리.
+## 🔄 5. CI/CD & Automation Pipelines
+- **GitHub Actions (.github/workflows/)**: Trigger events, step-by-step build/test/deployment, and secret management (e.g., GEMINI_API_KEY, GITHUB_TOKEN).
+- **GitLab CI (.gitlab-ci.yml)**: Pipeline stages (test, build-container, generate-docs, deploy) and runner operations.
 
-## 🛠️ 6. 문제 해결 및 FAQ (Troubleshooting & FAQ)
-- 실행 중 발생 가능한 예외 사례 (예: Wiki Push HTTP 403, API Key 미설정, GCP 권한 오차) 및 해결 방법 (GitHub Alert 상자 > [!TIP] 또는 > [!WARNING] 활용).
+## 🛠️ 6. Troubleshooting & FAQ
+- Known error scenarios (e.g., Wiki Push HTTP 403, missing API keys, permission issues) and resolution tips (use GitHub Alerts > [!TIP] or > [!WARNING]).
 
 ---
 ### Additional Rules:

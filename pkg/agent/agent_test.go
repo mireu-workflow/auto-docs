@@ -9,14 +9,14 @@ func TestCleanReportOutput(t *testing.T) {
 * Project Name: Auth-System
 * Tech Stack: Go
 
-# 🚀 Auth-System 사용설명 가이드 (Usage Guide)
+# 🚀 Auth-System User Guide & Technical Spec
 
-## 📌 주요 특징
+## 📌 Key Features
 - Multi-DB support`
 
-	expected := `# 🚀 Auth-System 사용설명 가이드 (Usage Guide)
+	expected := `# 🚀 Auth-System User Guide & Technical Spec
 
-## 📌 주요 특징
+## 📌 Key Features
 - Multi-DB support`
 
 	result := cleanReportOutput(inputWithPreamble)

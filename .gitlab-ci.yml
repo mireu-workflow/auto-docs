@@ -9,7 +9,7 @@ variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IMAGE_TAG_LATEST: $CI_REGISTRY_IMAGE:latest
 
-# 1. Go 소스코드 유닛 테스트
+# 1. Go Unit Tests
 test:
   stage: test
   image: golang:1.26-alpine
@@ -21,7 +21,7 @@ test:
     - main
     - master
 
-# 2. Docker 컨테이너 빌드 및 GitLab Container Registry 배포
+# 2. Docker Container Build & GitLab Container Registry Push
 build-container:
   stage: build-container
   image: docker:24.0.5
@@ -40,7 +40,7 @@ build-container:
     - master
     - tags
 
-# 3. auto-docs 실행 및 Wiki 자동 업데이트
+# 3. Run auto-docs & Auto-Deploy Wiki
 generate-wiki-docs:
   stage: generate-docs
   image: docker:24.0.5

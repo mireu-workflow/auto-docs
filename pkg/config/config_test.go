@@ -20,8 +20,8 @@ func TestLoadConfig(t *testing.T) {
 		t.Errorf("expected GeminiAPIKey 'test-api-key', got '%s'", cfg.GeminiAPIKey)
 	}
 
-	if cfg.DocsLanguage != "ko" {
-		t.Errorf("expected default DocsLanguage 'ko', got '%s'", cfg.DocsLanguage)
+	if cfg.DocsLanguage != "en" {
+		t.Errorf("expected default DocsLanguage 'en', got '%s'", cfg.DocsLanguage)
 	}
 
 	if cfg.GoalPrompt == "" {

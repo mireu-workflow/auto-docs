@@ -20,9 +20,9 @@ inputs:
     required: false
     default: 'github'
   docs_language:
-    description: 'Target language for documentation (e.g. ko, en, ja)'
+    description: 'Target language for documentation (e.g. en, ko, ja, zh)'
     required: false
-    default: 'ko'
+    default: 'en'
   goal_prompt:
     description: 'Goal prompt and persona for LLM doc generation'
     required: false

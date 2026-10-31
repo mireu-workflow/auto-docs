@@ -1,4 +1,4 @@
-# 예시 1: GitHub Actions에서 auto-docs Action을 사용하여 Wiki 자동 배포
+# Example: Auto Docs Wiki Generator in GitHub Actions
 name: Auto Docs Wiki Generator (GitHub Action Example)
 
 on:
@@ -10,19 +10,18 @@ jobs:
   generate-and-deploy-wiki:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      wiki: write  # GitHub Wiki push 권한 필수
+      contents: write  # Grants write access to repository and wiki
 
     steps:
-      - name: 소스코드 전체 Checkout
+      - name: Checkout Complete Source Code History
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: auto-docs Action 실행 및 Wiki 자동 업데이트
+      - name: Run auto-docs Action & Deploy Wiki
         uses: Mireu-Lab/auto-docs@v1
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           gemini_model: "gemma-4-26b-a4b-it"
-          docs_language: "ko"
+          docs_language: "en"
