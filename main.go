@@ -18,11 +18,20 @@ import (
 
 func main() {
 	mcpServerMode := flag.Bool("mcp-server", false, "Run auto-docs as an MCP Server over Stdio")
+	langFlag := flag.String("lang", "", "Documentation output language (e.g. ko, en, ja, zh)")
+	languageFlag := flag.String("language", "", "Alias for -lang")
 	flag.Parse()
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Apply manual language override if specified via CLI flags
+	if *langFlag != "" {
+		cfg.DocsLanguage = *langFlag
+	} else if *languageFlag != "" {
+		cfg.DocsLanguage = *languageFlag
 	}
 
 	// 1. If invoked as MCP Server mode
@@ -87,9 +96,12 @@ func main() {
 		fmt.Println("Writing default structured report template...")
 		
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report\n\n> **최종 업데이트 일시**: %s (KST)\n> **대상 브랜치**: `%s`\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
-			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **프로젝트 버전 (Version)**: `%s`\n> **대상 브랜치 (Git Branch)**: `%s`\n> **최종 업데이트 일시 (Last Updated)**: %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+			gitMeta.Version,
 			gitMeta.BranchName,
+			gitMeta.Version,
+			gitMeta.BranchName,
+			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
 			overview,
 			changedFiles,
 		)
@@ -98,14 +110,17 @@ func main() {
 	}
 
 	aiAgent := agent.NewGeminiClient(cfg)
-	report, err := aiAgent.GenerateReportWithContext(ctx, overview, diffSummary, codeSnippets, webResults, previousWiki, gitMeta.BranchName, opsExecutionTime)
+	report, err := aiAgent.GenerateReportWithContext(ctx, overview, diffSummary, codeSnippets, webResults, previousWiki, gitMeta.BranchName, gitMeta.Version, opsExecutionTime)
 	if err != nil {
 		log.Printf("⚠️ Warning: AI Agent report generation failed: %v", err)
 		log.Println("Deploying default structured report template as fallback...")
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report\n\n> **최종 업데이트 일시**: %s (KST)\n> **대상 브랜치**: `%s`\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
-			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **프로젝트 버전 (Version)**: `%s`\n> **대상 브랜치 (Git Branch)**: `%s`\n> **최종 업데이트 일시 (Last Updated)**: %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+			gitMeta.Version,
 			gitMeta.BranchName,
+			gitMeta.Version,
+			gitMeta.BranchName,
+			opsExecutionTime.In(time.FixedZone("KST", 9*3600)).Format("2006-01-02 15:04:05 MST"),
 			overview,
 			changedFiles,
 		)

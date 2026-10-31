@@ -167,14 +167,16 @@ func (a *CodeAnalyzer) SearchCode(ctx context.Context, query string, isRegex boo
 type GitMetadata struct {
 	BranchName string
 	CommitHash string
+	Version    string
 	Author     string
 }
 
-// GetGitMetadata retrieves the current branch name, commit hash, and author.
+// GetGitMetadata retrieves the current branch name, commit hash, version/tag, and author.
 func (a *CodeAnalyzer) GetGitMetadata(ctx context.Context) GitMetadata {
 	meta := GitMetadata{
 		BranchName: "unknown",
 		CommitHash: "unknown",
+		Version:    "dev",
 	}
 
 	// 1. Branch name from CI environment or git command
@@ -203,7 +205,25 @@ func (a *CodeAnalyzer) GetGitMetadata(ctx context.Context) GitMetadata {
 		}
 	}
 
-	// 3. Author / Actor
+	// 3. Version / Release Tag
+	if v := os.Getenv("VERSION"); v != "" {
+		meta.Version = v
+	} else if v := os.Getenv("RELEASE_VERSION"); v != "" {
+		meta.Version = v
+	} else if v := os.Getenv("CI_COMMIT_TAG"); v != "" {
+		meta.Version = v
+	} else {
+		cmdTag := exec.CommandContext(ctx, "git", "describe", "--tags", "--always")
+		cmdTag.Dir = a.RepoPath
+		if out, err := cmdTag.Output(); err == nil {
+			trimmed := strings.TrimSpace(string(out))
+			if trimmed != "" {
+				meta.Version = trimmed
+			}
+		}
+	}
+
+	// 4. Author / Actor
 	if act := os.Getenv("GITHUB_ACTOR"); act != "" {
 		meta.Author = act
 	} else if act := os.Getenv("GITLAB_USER_LOGIN"); act != "" {

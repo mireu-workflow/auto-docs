@@ -16,7 +16,7 @@ import (
 
 type AIClient interface {
 	GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult) (string, error)
-	GenerateReportWithContext(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult, existingWiki string, branchName string, updatedAt time.Time) (string, error)
+	GenerateReportWithContext(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult, existingWiki string, branchName string, version string, updatedAt time.Time) (string, error)
 }
 
 type GeminiClient struct {
@@ -57,10 +57,10 @@ type geminiResponse struct {
 }
 
 func (g *GeminiClient) GenerateReport(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult) (string, error) {
-	return g.GenerateReportWithContext(ctx, projectOverview, diffSummary, codeSnippets, webSearchResults, "", "", time.Now())
+	return g.GenerateReportWithContext(ctx, projectOverview, diffSummary, codeSnippets, webSearchResults, "", "", "", time.Now())
 }
 
-func (g *GeminiClient) GenerateReportWithContext(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult, existingWiki string, branchName string, updatedAt time.Time) (string, error) {
+func (g *GeminiClient) GenerateReportWithContext(ctx context.Context, projectOverview string, diffSummary string, codeSnippets map[string]string, webSearchResults []searcher.SearchResult, existingWiki string, branchName string, version string, updatedAt time.Time) (string, error) {
 	var promptBuilder strings.Builder
 	promptBuilder.WriteString("## Goal & Persona\n")
 	promptBuilder.WriteString(g.cfg.GoalPrompt)
@@ -74,8 +74,11 @@ func (g *GeminiClient) GenerateReportWithContext(ctx context.Context, projectOve
 	promptBuilder.WriteString(projectOverview)
 	promptBuilder.WriteString("\n\n")
 
-	if branchName != "" || !updatedAt.IsZero() {
+	if branchName != "" || version != "" || !updatedAt.IsZero() {
 		promptBuilder.WriteString("## Execution & Ops Pipeline Metadata\n")
+		if version != "" {
+			promptBuilder.WriteString(fmt.Sprintf("- **Project / Release Version**: `%s`\n", version))
+		}
 		if branchName != "" {
 			promptBuilder.WriteString(fmt.Sprintf("- **Target Git Branch**: `%s`\n", branchName))
 		}
@@ -137,12 +140,13 @@ func (g *GeminiClient) GenerateReportWithContext(ctx context.Context, projectOve
 ### Required Wiki Documentation Structure (위키 설명서 필수 구조):
 You MUST follow the structured format below for the Wiki manual:
 
-# 🚀 (Project Name) 사용설명서 & 시스템 명세서
+# 🚀 (Project Name) v(Version) ((Branch Name)) 사용설명서 & 시스템 명세서
 
 > **[개요 요약]**: 프로젝트의 핵심 역할과 SLM / MCP 연동 목적을 1~2문장으로 요약하여 작성합니다.
 > 
-> * **최종 업데이트 일시 (Last Updated)**: (Execution Timestamp KST / UTC)
+> * **프로젝트 버전 (Version)**: '(Version)'
 > * **대상 브랜치 (Git Branch)**: '(Branch Name)'
+> * **최종 업데이트 일시 (Last Updated)**: (Execution Timestamp KST / UTC)
 
 ## 📖 1. 개요 및 주요 기능 (Overview & Key Features)
 - **프로젝트 개요**: 시스템의 핵심 목표 및 주요 활용 시나리오.
