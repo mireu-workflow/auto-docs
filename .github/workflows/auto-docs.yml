@@ -9,8 +9,7 @@ jobs:
   build-and-generate-docs:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      wiki: write
+      contents: write
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
