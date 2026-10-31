@@ -53,3 +53,21 @@ func TestWikiDeployer_InvalidRepoURL(t *testing.T) {
 		t.Errorf("expected error when cloning invalid git wiki URL, got nil")
 	}
 }
+
+func TestExtractProjectPathFromURL(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"https://gitlab.com/mireu-lab/auto-docs.wiki.git", "mireu-lab/auto-docs"},
+		{"https://oauth2:token@gitlab.com/group/subgroup/project.git", "subgroup/project"},
+		{"invalid-url", ""},
+	}
+
+	for _, tt := range tests {
+		actual := wiki.ExtractProjectPathFromURL(tt.input)
+		if actual != tt.expected {
+			t.Errorf("ExtractProjectPathFromURL(%q) = %q, want %q", tt.input, actual, tt.expected)
+		}
+	}
+}

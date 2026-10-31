@@ -2,6 +2,7 @@ package wiki
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +20,22 @@ func NewWikiDeployer(cfg *config.Config) *WikiDeployer {
 }
 
 func (w *WikiDeployer) Deploy(reportContent string) error {
+	// 1. If WikiType is gitlab and glab CLI is installed, attempt glab API deployment first
+	if strings.ToLower(w.cfg.WikiType) == "gitlab" {
+		if err := w.deployWithGlabCLI(reportContent); err == nil {
+			fmt.Println("[WikiDeployer] Successfully deployed Wiki via glab CLI!")
+			return nil
+		} else {
+			fmt.Printf("[WikiDeployer] glab CLI deployment notice: %v. Falling back to git repository deployment...\n", err)
+		}
+	}
+
+	// 2. If WikiType is github and gh CLI is available, setup gh auth for git operations
+	if strings.ToLower(w.cfg.WikiType) == "github" {
+		w.setupGitHubCLIAuth()
+	}
+
+	// 3. Deploy via Git Wiki Repository
 	if w.cfg.WikiRepoURL == "" {
 		fmt.Println("[WikiDeployer] WIKI_REPO_URL is not set. Saving report locally to ./wiki_output/Home.md")
 		return os.WriteFile("wiki_output/Home.md", []byte(reportContent), 0644)
@@ -69,6 +86,72 @@ func (w *WikiDeployer) Deploy(reportContent string) error {
 		return fmt.Errorf("git push failed: %s (%w)", outStr, err)
 	}
 
-	fmt.Println("[WikiDeployer] Wiki successfully updated and deployed!")
+	fmt.Println("[WikiDeployer] Wiki successfully updated and deployed via Git repository!")
 	return nil
+}
+
+// deployWithGlabCLI attempts to create or update GitLab Wiki pages using `glab api`
+func (w *WikiDeployer) deployWithGlabCLI(content string) error {
+	if _, err := exec.LookPath("glab"); err != nil {
+		return fmt.Errorf("glab CLI not installed")
+	}
+
+	projectPath := os.Getenv("CI_PROJECT_PATH")
+	if projectPath == "" && w.cfg.WikiRepoURL != "" {
+		projectPath = ExtractProjectPathFromURL(w.cfg.WikiRepoURL)
+	}
+	if projectPath == "" {
+		return fmt.Errorf("gitlab project path could not be determined")
+	}
+
+	encodedProject := url.PathEscape(projectPath)
+
+	// Try to update existing Home page first via PUT /projects/:id/wikis/home
+	updateEndpoint := fmt.Sprintf("projects/%s/wikis/home", encodedProject)
+	cmdUpdate := exec.Command("glab", "api", "-X", "PUT", updateEndpoint, "-F", "title=home", "-F", fmt.Sprintf("content=%s", content))
+	out, err := cmdUpdate.CombinedOutput()
+	if err == nil {
+		return nil
+	}
+
+	// If page does not exist (404), create it via POST /projects/:id/wikis
+	if strings.Contains(string(out), "404") || strings.Contains(string(out), "Not Found") {
+		createEndpoint := fmt.Sprintf("projects/%s/wikis", encodedProject)
+		cmdCreate := exec.Command("glab", "api", "-X", "POST", createEndpoint, "-F", "title=home", "-F", fmt.Sprintf("content=%s", content))
+		if createOut, createErr := cmdCreate.CombinedOutput(); createErr == nil {
+			return nil
+		} else {
+			return fmt.Errorf("glab api create failed: %s (%w)", string(createOut), createErr)
+		}
+	}
+
+	return fmt.Errorf("glab api update failed: %s (%w)", string(out), err)
+}
+
+// setupGitHubCLIAuth configures git credential helper or token with `gh auth setup-git` if gh is present
+func (w *WikiDeployer) setupGitHubCLIAuth() {
+	if _, err := exec.LookPath("gh"); err == nil {
+		cmdAuth := exec.Command("gh", "auth", "setup-git")
+		_ = cmdAuth.Run()
+	}
+}
+
+// ExtractProjectPathFromURL extracts group/project from URL like https://gitlab.com/group/repo.wiki.git
+func ExtractProjectPathFromURL(rawURL string) string {
+	parts := strings.Split(rawURL, "/")
+	if len(parts) >= 2 {
+		last := parts[len(parts)-1]
+		last = strings.TrimSuffix(last, ".wiki.git")
+		last = strings.TrimSuffix(last, ".git")
+		secondLast := parts[len(parts)-2]
+		// In case user:pass@host was part of secondLast, clean it
+		if strings.Contains(secondLast, "@") {
+			atIdx := strings.LastIndex(secondLast, "@")
+			secondLast = secondLast[atIdx+1:]
+		}
+		if secondLast != "" && last != "" && !strings.Contains(secondLast, ":") {
+			return fmt.Sprintf("%s/%s", secondLast, last)
+		}
+	}
+	return ""
 }

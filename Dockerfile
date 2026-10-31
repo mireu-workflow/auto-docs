@@ -9,7 +9,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o auto-docs main.go
 
 FROM alpine:latest
-RUN apk add --no-cache git ca-certificates
+RUN apk add --no-cache git ca-certificates github-cli glab
 WORKDIR /app
 COPY --from=builder /app/auto-docs /usr/local/bin/auto-docs
 
