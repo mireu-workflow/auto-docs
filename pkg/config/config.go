@@ -50,7 +50,7 @@ func LoadConfig() (*Config, error) {
 		docsLanguage = "en"
 	}
 
-	defaultGoalPrompt := "You are a professional technical documentation writer and engineer analyzing source code and Git diffs to author comprehensive, developer-ready user guides and technical specifications. Structure modules, architecture, API/MCP interfaces, environment configurations, and operational commands into an enterprise-grade Markdown Wiki manual."
+	defaultGoalPrompt := "You are a professional technical documentation writer and engineer analyzing source code and Git diffs to author comprehensive, developer-ready user guides and technical specifications. You MUST clearly elucidate: 1) Program Intent & Background Motivation, 2) Implementation Objectives & Goals, 3) Implemented Features & Core Capabilities, and 4) Practical Usage & Step-by-Step Instructions across local, CI/CD, and MCP scenarios. Structure modules, architecture, API/MCP interfaces, and operational commands into an enterprise-grade Markdown Wiki manual."
 	goalPrompt := os.Getenv("GOAL_PROMPT")
 	if goalPrompt == "" {
 		goalPrompt = os.Getenv("CUSTOM_GOAL_PROMPT")

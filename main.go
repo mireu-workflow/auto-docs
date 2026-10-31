@@ -114,7 +114,7 @@ func main() {
 		fmt.Println("Writing default structured report template...")
 		
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **Project Version**: `%s`\n> **Target Branch**: `%s`\n> **Last Updated**: %s (UTC) / %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **Project Version**: `%s`\n> **Target Branch**: `%s`\n> **Last Updated**: %s (UTC) / %s (KST)\n\n## 🎯 1. Program Intent & Implementation Purpose\n- **Design Intent**: Automated AI-driven documentation engine to eliminate manual documentation drift.\n- **Implementation Purpose**: Automatically analyze codebase and git changes to publish user manuals and specs.\n\n## 🚀 2. Implemented Features\n- Dual Mode (CLI Pipeline & Stdio MCP Server)\n- Incremental Wiki context reconciliation\n- Deploy Mode A/B fallback support\n\n## ⚡ 3. Practical Usage\n- Run CLI: `go run main.go -lang en`\n- Run MCP: `go run main.go --mcp-server`\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
 			gitMeta.Version,
 			gitMeta.BranchName,
 			gitMeta.Version,
@@ -134,7 +134,7 @@ func main() {
 		log.Printf("⚠️ Warning: AI Agent report generation failed: %v", err)
 		log.Println("Deploying default structured report template as fallback...")
 		_ = os.MkdirAll("wiki_output", 0755)
-		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **Project Version**: `%s`\n> **Target Branch**: `%s`\n> **Last Updated**: %s (UTC) / %s (KST)\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
+		templateReport := fmt.Sprintf("# Auto-Docs Project Report v%s (%s)\n\n> **Project Version**: `%s`\n> **Target Branch**: `%s`\n> **Last Updated**: %s (UTC) / %s (KST)\n\n## 🎯 1. Program Intent & Implementation Purpose\n- **Design Intent**: Automated AI-driven documentation engine to eliminate manual documentation drift.\n- **Implementation Purpose**: Automatically analyze codebase and git changes to publish user manuals and specs.\n\n## 🚀 2. Implemented Features\n- Dual Mode (CLI Pipeline & Stdio MCP Server)\n- Incremental Wiki context reconciliation\n- Deploy Mode A/B fallback support\n\n## ⚡ 3. Practical Usage\n- Run CLI: `go run main.go -lang en`\n- Run MCP: `go run main.go --mcp-server`\n\n## Overview\n%s\n\n## Changed Files\n%v\n",
 			gitMeta.Version,
 			gitMeta.BranchName,
 			gitMeta.Version,

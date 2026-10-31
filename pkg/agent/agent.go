@@ -149,38 +149,52 @@ You MUST follow the structured format below for the Wiki manual:
 > * **Target Branch**: '(Branch Name)'
 > * **Last Updated**: (Execution Timestamp UTC / KST)
 
-## 📖 1. Overview & Key Features
-- **Project Overview**: System mission and key use cases.
-- **Key Features**:
-  - Feature 1: Detailed explanation
-  - Feature 2: Detailed explanation
-  - Feature 3: Detailed explanation
+## 🎯 1. Program Intent & Implementation Purpose (프로그램 의도 및 구현 목적)
+- **Design Intent & Background Motivation (프로그램의 의도)**:
+  - Why was this software created? What real-world developer friction, manual burden, or technical problem does it solve?
+  - Background context and architectural motivation for introducing AI/SLM and MCP automation.
+- **Implementation Objectives & Goals (구현 목적)**:
+  - Specific engineering goals and milestones achieved by this system (e.g., zero-touch documentation, deterministic git tracking, standardized tool APIs).
+  - Target audience (DevOps engineers, open-source contributors, team leads).
 
-## 🏗️ 2. System Architecture & Workflow
+## 🚀 2. Implemented Features & Core Capabilities (구현 기능 명세)
+- **Core Implemented Features (주요 구현 기능)**:
+  - Feature 1: Comprehensive operational behavior, supported options, and data guarantees.
+  - Feature 2: Architectural mechanisms and protocol support.
+  - Feature 3: Error resilience, fallback mechanisms, and automation triggers.
+- **Feature Matrix & Supported Platforms**:
+  - Summary table comparing supported platforms (GitHub, GitLab, Local CLI, Stdio MCP).
+
+## 🏗️ 3. System Architecture & Workflow (시스템 아키텍처 및 워크플로우)
 - **Architecture Diagram**: Visualize data flow and module relationships using Mermaid ('graph TD' or 'sequenceDiagram') code block.
-- **Core Components**: In-depth explanation of primary components and operational principles based on the codebase.
+- **Core Components**: In-depth explanation of primary packages and operational principles based on the codebase.
 
-## ⚡ 3. Quick Start Guide
-### 3.1. Prerequisites
+## ⚡ 4. Practical Usage & Scenarios (활용 및 사용 방법)
+### 4.1. Prerequisites & Environment Setup
 - Runtime environment (e.g., Go 1.26+, Docker 24+), CLI tools, and required accounts/credentials.
-### 3.2. Environment Variables & Configurations
+### 4.2. Environment Variables & Configurations
 - Markdown table format:
   | Variable | Required | Default | Description |
   | :--- | :---: | :--- | :--- |
-### 3.3. Usage Commands
-- **CLI Execution**: 'go run main.go ...' or binary execution commands.
-- **Docker Execution**: 'docker run ...' commands.
-- **MCP Server Mode (if supported)**: MCP stdio execution commands.
+### 4.3. Step-by-Step Usage Scenarios (활용 방법 시나리오)
+- **Scenario A: Local CLI Execution**:
+  - Command: 'go run main.go ...' or binary execution with flags ('-lang', '-mode').
+- **Scenario B: Container & Docker Execution**:
+  - Command: 'docker run ...' with volume mounts and environment injections.
+- **Scenario C: Stdio MCP Server Integration**:
+  - How to configure and consume tools in Claude Desktop, Antigravity, or other MCP hosts.
+- **Scenario D: Automated CI/CD Ops Pipeline**:
+  - GitHub Actions and GitLab CI automated Wiki deployment setups.
 
-## 🔍 4. Module & API/MCP Specification
+## 🔍 5. Module & API/MCP Specification (상세 모듈 및 명세)
 - Detailed specification of packages, structs, major functions, CLI flags, and MCP tools defined in the codebase.
 - Input/output data schemas and return patterns.
 
-## 🔄 5. CI/CD & Automation Pipelines
+## 🔄 6. CI/CD & Automation Pipelines (CI/CD 파이프라인)
 - **GitHub Actions (.github/workflows/)**: Trigger events, step-by-step build/test/deployment, and secret management (e.g., GEMINI_API_KEY, GITHUB_TOKEN).
 - **GitLab CI (.gitlab-ci.yml)**: Pipeline stages (test, build-container, generate-docs, deploy) and runner operations.
 
-## 🛠️ 6. Troubleshooting & FAQ
+## 🛠️ 7. Troubleshooting & FAQ (문제 해결 및 FAQ)
 - Known error scenarios (e.g., Wiki Push HTTP 403, missing API keys, permission issues) and resolution tips (use GitHub Alerts > [!TIP] or > [!WARNING]).
 
 ---
