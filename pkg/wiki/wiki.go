@@ -83,7 +83,18 @@ func (w *WikiDeployer) Deploy(reportContent string) error {
 	fmt.Printf("[WikiDeployer] Cloning Wiki repo: %s\n", w.cfg.WikiRepoURL)
 	cmdClone := exec.Command("git", "clone", w.cfg.WikiRepoURL, tmpDir)
 	if out, err := cmdClone.CombinedOutput(); err != nil {
-		return fmt.Errorf("git clone failed: %s (%w)", string(out), err)
+		outStr := string(out)
+		// If Wiki repository does not exist yet (e.g. GitHub Wiki hasn't had its first page created, or 404),
+		// initialize git repository locally and fallback to saving output so pipeline does not crash.
+		if strings.Contains(outStr, "Repository not found") || strings.Contains(outStr, "fatal: repository") {
+			fmt.Printf("⚠️ [WikiDeployer] Remote Wiki git repository not found (likely uninitialized on GitHub UI or restricted).\nSaving generated documentation locally to ./wiki_output/Home.md as fallback...\n")
+			_ = os.MkdirAll("wiki_output", 0755)
+			if saveErr := os.WriteFile("wiki_output/Home.md", []byte(reportContent), 0644); saveErr != nil {
+				return fmt.Errorf("git clone failed (%s) and local save failed: %w", outStr, saveErr)
+			}
+			return nil
+		}
+		return fmt.Errorf("git clone failed: %s (%w)", outStr, err)
 	}
 
 	// Configure Git user
