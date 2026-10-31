@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Mireu-Lab/auto-docs/pkg/agent"
@@ -20,6 +21,8 @@ func main() {
 	mcpServerMode := flag.Bool("mcp-server", false, "Run auto-docs as an MCP Server over Stdio")
 	langFlag := flag.String("lang", "", "Documentation output language (e.g. ko, en, ja, zh)")
 	languageFlag := flag.String("language", "", "Alias for -lang")
+	modeFlag := flag.String("mode", "", "Deployment fallback mode: 'A' (wiki-only) or 'B' (repo-docs push)")
+	deployModeFlag := flag.String("deploy-mode", "", "Alias for -mode")
 	flag.Parse()
 
 	cfg, err := config.LoadConfig()
@@ -32,6 +35,21 @@ func main() {
 		cfg.DocsLanguage = *langFlag
 	} else if *languageFlag != "" {
 		cfg.DocsLanguage = *languageFlag
+	}
+
+	// Apply manual deployment mode override if specified
+	if *modeFlag != "" {
+		if strings.ToUpper(*modeFlag) == "B" || strings.ToLower(*modeFlag) == "repo-docs" {
+			cfg.DeployMode = "B"
+		} else {
+			cfg.DeployMode = "A"
+		}
+	} else if *deployModeFlag != "" {
+		if strings.ToUpper(*deployModeFlag) == "B" || strings.ToLower(*deployModeFlag) == "repo-docs" {
+			cfg.DeployMode = "B"
+		} else {
+			cfg.DeployMode = "A"
+		}
 	}
 
 	// 1. If invoked as MCP Server mode

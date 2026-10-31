@@ -87,7 +87,19 @@ func (w *WikiDeployer) Deploy(reportContent string) error {
 		// If Wiki repository does not exist yet (e.g. GitHub Wiki hasn't had its first page created, or 404),
 		// initialize git repository locally and fallback to saving output so pipeline does not crash.
 		if strings.Contains(outStr, "Repository not found") || strings.Contains(outStr, "fatal: repository") {
-			fmt.Printf("⚠️ [WikiDeployer] Remote Wiki git repository not found (likely uninitialized on GitHub UI or restricted).\nSaving generated documentation locally to ./wiki_output/Home.md as fallback...\n")
+			// Option B: Auto commit & push to current repository's docs/ directory
+			if strings.ToUpper(w.cfg.DeployMode) == "B" {
+				fmt.Println("🚀 [WikiDeployer] Deploy Mode B: Auto-committing and pushing report to repository 'docs/Home.md'...")
+				if pushErr := w.deployToSourceRepoDocs(reportContent); pushErr != nil {
+					fmt.Printf("⚠️ [WikiDeployer] Deploy Mode B push error: %v. Saving locally to ./wiki_output/Home.md\n", pushErr)
+				} else {
+					fmt.Println("✅ [WikiDeployer] Report successfully committed and pushed to repository 'docs/Home.md'!")
+					return nil
+				}
+			}
+
+			// Option A (Default): Wiki-only, save locally to wiki_output
+			fmt.Printf("⚠️ [WikiDeployer] Deploy Mode A: Remote Wiki git repository not found (likely uninitialized on GitHub UI or restricted).\nSaving generated documentation locally to ./wiki_output/Home.md as fallback...\n")
 			_ = os.MkdirAll("wiki_output", 0755)
 			if saveErr := os.WriteFile("wiki_output/Home.md", []byte(reportContent), 0644); saveErr != nil {
 				return fmt.Errorf("git clone failed (%s) and local save failed: %w", outStr, saveErr)
@@ -198,4 +210,38 @@ func ExtractProjectPathFromURL(rawURL string) string {
 		}
 	}
 	return ""
+}
+
+// deployToSourceRepoDocs commits and pushes the generated report to docs/Home.md in the current repository
+func (w *WikiDeployer) deployToSourceRepoDocs(reportContent string) error {
+	repoDir := w.cfg.RepoPath
+	if repoDir == "" {
+		repoDir = "."
+	}
+	docsDir := filepath.Join(repoDir, "docs")
+	if err := os.MkdirAll(docsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create docs directory: %w", err)
+	}
+
+	docFile := filepath.Join(docsDir, "Home.md")
+	if err := os.WriteFile(docFile, []byte(reportContent), 0644); err != nil {
+		return fmt.Errorf("failed to write docs/Home.md: %w", err)
+	}
+
+	// Git add, commit, and push
+	exec.Command("git", "-C", repoDir, "add", "docs/Home.md").Run()
+	cmdCommit := exec.Command("git", "-C", repoDir, "commit", "-m", "docs: auto-generated documentation in docs/Home.md (Option B)")
+	if out, err := cmdCommit.CombinedOutput(); err != nil {
+		if strings.Contains(string(out), "nothing to commit") {
+			return nil
+		}
+		return fmt.Errorf("git commit docs failed: %s (%w)", string(out), err)
+	}
+
+	cmdPush := exec.Command("git", "-C", repoDir, "push", "origin", "HEAD")
+	if out, err := cmdPush.CombinedOutput(); err != nil {
+		return fmt.Errorf("git push docs failed: %s (%w)", string(out), err)
+	}
+
+	return nil
 }

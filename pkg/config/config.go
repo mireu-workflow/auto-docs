@@ -17,6 +17,7 @@ type Config struct {
 	GitEmail     string
 	DocsLanguage string // "ko", "en", etc.
 	GoalPrompt   string // Persona & Mission goal prompt
+	DeployMode   string // "A" ("wiki-only") or "B" ("repo-docs")
 }
 
 func LoadConfig() (*Config, error) {
@@ -90,6 +91,16 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	deployMode := strings.ToLower(os.Getenv("DEPLOY_MODE"))
+	if deployMode == "" {
+		deployMode = strings.ToLower(os.Getenv("DEPLOY_FALLBACK_MODE"))
+	}
+	if deployMode == "b" || deployMode == "repo-docs" || deployMode == "docs" {
+		deployMode = "B"
+	} else {
+		deployMode = "A" // Default: Wiki-only
+	}
+
 	resolvedWikiURL := ResolveWikiRepoURL(wikiRepoURL)
 
 	return &Config{
@@ -102,6 +113,7 @@ func LoadConfig() (*Config, error) {
 		GitEmail:     gitEmail,
 		DocsLanguage: docsLanguage,
 		GoalPrompt:   goalPrompt,
+		DeployMode:   deployMode,
 	}, nil
 }
 
